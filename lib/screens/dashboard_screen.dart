@@ -29,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
     },
     {
       'title': 'Supplier Management',
-      'description': 'Manage suppliers & pricing',
+      'description': 'Manage suppliers',
       'icon': Icons.people,
       'color': Colors.orange,
       // 'onPress': () => Navigator.pushNamed(context, 'Suppliers'),

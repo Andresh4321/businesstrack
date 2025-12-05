@@ -1,7 +1,6 @@
 import 'package:businesstrack/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'dashboard_screen.dart'; // Replace with your main dashboard page
 
 class SplashScreensecond extends StatelessWidget {
   const SplashScreensecond({super.key});
