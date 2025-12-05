@@ -39,6 +39,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  cupertino_icons: ^1.0.8
+  lottie: ^2.3.0   # ✅ Move lottie here, under dependencies 
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -61,6 +64,11 @@ flutter:
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
