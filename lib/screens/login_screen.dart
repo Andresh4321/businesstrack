@@ -1,4 +1,6 @@
-import 'package:businesstrack/screens/dashboard_screen.dart';
+import 'package:businesstrack/myapp.dart';
+import 'package:businesstrack/screens/BottomNavigaiton.dart';
+import 'package:businesstrack/screens/bottom_navigation/dashboard_screen.dart';
 import 'package:businesstrack/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: const Color(0xfff8f8fc),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(top: 40),
         child: Center(
@@ -31,23 +33,18 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Back Button
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          color: Colors.white,
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.arrow_back, size: 20),
-                        ),
-                      ),
+                  IconButton(
+                    icon: Icon(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Icons.light_mode
+                          : Icons.dark_mode,
                     ),
+                    onPressed: () {
+                      MyApp.themeNotifier.value =
+                          MyApp.themeNotifier.value == ThemeMode.light
+                          ? ThemeMode.dark
+                          : ThemeMode.light;
+                    },
                   ),
                   const SizedBox(height: 28),
 
@@ -124,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const DashboardScreen(),
+                            builder: (context) => const BottomNavigaiton(),
                           ),
                         );
                       },
