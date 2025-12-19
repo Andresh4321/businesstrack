@@ -18,38 +18,49 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFEFF3FF), Color(0xFFFFFFFF), Color(0xFFEAF3FF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? null
+              : const LinearGradient(
+                  colors: [
+                    Color(0xFFEFF3FF),
+                    Color(0xFFFFFFFF),
+                    Color(0xFFEAF3FF),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
         ),
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40), 
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 500, // <--- Tablet-friendly max width
-              ),
+              constraints: const BoxConstraints(maxWidth: 500),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 32,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark
+                      ? Theme.of(context).colorScheme.surface
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.indigo.withOpacity(0.2)),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.grey.shade700
+                        : Colors.indigo.withOpacity(0.2),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(isDark ? 0.4 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -61,7 +72,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Logo
-                      Container(
+                      Padding(
                         padding: const EdgeInsets.all(16),
                         child: Image.asset(
                           'assets/images/logo.png',
@@ -72,21 +83,20 @@ class _SignupScreenState extends State<SignupScreen> {
 
                       const SizedBox(height: 16),
 
-                      const Text(
+                      Text(
                         "BusinessTrack",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         "Create your account",
-                        style: TextStyle(color: Colors.grey),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 28),
 
-                      // Full Name
                       Textfield(
                         controller: nameController,
                         label: "Full Name",
@@ -95,7 +105,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Phone Number
                       Textfield(
                         controller: phoneController,
                         label: "Phone Number",
@@ -105,7 +114,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Email
                       Textfield(
                         controller: emailController,
                         label: "Email",
@@ -115,7 +123,6 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Password
                       Textfield(
                         controller: passwordController,
                         label: "Password",
@@ -123,9 +130,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         icon: Icons.lock,
                         obscureText: true,
                       ),
-                      const SizedBox(height: 24),
-
-                      // Create Account Button
+                      const SizedBox(height:24),
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -135,48 +140,36 @@ class _SignupScreenState extends State<SignupScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
+                                  builder: (_) => const LoginScreen(),
                                 ),
                               );
                             }
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            "Create Account",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
+                          child: const Text("Create Account"),
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Already have an account
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             "Already have an account? ",
-                            style: TextStyle(color: Colors.grey),
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text(
+                            onTap: () => Navigator.pop(context),
+                            child: Text(
                               "Login",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                  ),
                             ),
                           ),
                         ],
