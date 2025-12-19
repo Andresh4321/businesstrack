@@ -30,7 +30,7 @@ class _MyAppState extends State<MyApp> {
           theme: Themefont().lightTheme,
           darkTheme: Themefont().darkTheme,
           themeMode: mode,
-          home: const BottomNavigaiton(),
+          home: const SplashLoadingScreen(),
         );
       },
     );

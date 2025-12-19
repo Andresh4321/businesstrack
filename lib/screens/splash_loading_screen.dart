@@ -33,7 +33,7 @@ class _SplashLoadingScreenState extends State<SplashLoadingScreen> {
     final animationWidth = isTablet ? size.width * 0.30 : size.width * 0.45;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE0E0E0), // Silver
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255), // Silver
       body: SafeArea(
         child: Center(
           child: Column(
