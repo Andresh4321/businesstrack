@@ -1,93 +1,130 @@
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:hive/hive.dart';
-// import 'package:lost_n_found/core/constants/hive_table_constant.dart';
-// import 'package:lost_n_found/features/batch/data/models/batch_hive_model.dart';
-// import 'package:path_provider/path_provider.dart';
+import 'package:businesstrack/core/constants/hive_table_constant.dart';
+import 'package:businesstrack/features/auth/data/models/auth_hive_model.dart';
+import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 
-// final hiveServiceProvider = Provider<HiveService>((ref) {
-//   return HiveService();
-// });
+final hiveServiceProvider = Provider<HiveService>((ref) {
+  return HiveService();
+});
 
-// class HiveService {
-//   //Get batch box
-//   Box<BatchHiveModel> get _batchBox =>
-//       Hive.box<BatchHiveModel>(HiveTableConstant.batchTable);
+class HiveService {
+  //Get user box
+  Box<UserHiveModel> get _userBox =>
+      Hive.box<UserHiveModel>(HiveTableConstant.userTable);
 
-//   //Initialize Hive
-//   Future<void> init() async {
-//     final directory = await getApplicationDocumentsDirectory();
-//     final path = '${directory.path}/${HiveTableConstant.dbName}';
-//     Hive.init(path);
-//     _registerAdapters();
-//     await _openBoxes();
-//     await insertDummyBatches();
-//   }
+  //Initialize Hive
+  Future<void> init() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final path = '${directory.path}/${HiveTableConstant.dbName}';
+    Hive.init(path);
+    _registerAdapters();
+    await _openBoxes();
+    await insertDummyuseres();
+  }
 
-//   Future<void> insertDummyBatches() async {
-//     final box = await Hive.openBox<BatchHiveModel>(
-//       HiveTableConstant.batchTable,
-//     );
-//     final dummyBatches = [
-//       BatchHiveModel(batchName: '35-A'),
-//       BatchHiveModel(batchName: '35-B'),
-//       BatchHiveModel(batchName: '35-C'),
-//       BatchHiveModel(batchName: '35-D'),
-//     ];
-//     for (var batch in dummyBatches) {
-//       await box.put(batch.batchId, batch);
-//     }
-//     await box.close();
-//   }
+  Future<void> insertDummyuseres() async {
+    final box = await Hive.openBox<UserHiveModel>(HiveTableConstant.userTable);
+    final dummyuseres = [
+      UserHiveModel(username: '35-A'),
+      UserHiveModel(username: '35-B'),
+      UserHiveModel(username: '35-C'),
+      UserHiveModel(username: '35-D'),
+    ];
+    for (var user in dummyuseres) {
+      await box.put(user.userId, user);
+    }
+    await box.close();
+  }
 
-//   //Register all type adapters
-//   void _registerAdapters() {
-//     if (!Hive.isAdapterRegistered(HiveTableConstant.batchTypeId)) {
-//       Hive.registerAdapter(BatchHiveModelAdapter());
-//     }
-//   }
+  //Register all type adapters
+  void _registerAdapters() {
+    if (!Hive.isAdapterRegistered(HiveTableConstant.userTypeId)) {
+      Hive.registerAdapter(UserHiveModelAdapter());
+    }
 
-//   //Open all boxes
-//   Future<void> _openBoxes() async {
-//     await Hive.openBox<BatchHiveModel>(HiveTableConstant.batchTable);
-//   }
+    //Register other adapter here
+    if (!Hive.isAdapterRegistered(HiveTableConstant.authTypeId)) {
+      Hive.registerAdapter(AuthHiveModelAdapter());
+    }
+  }
 
-//   //Create a new batch
-//   Future<BatchHiveModel> createBatch(BatchHiveModel batch) async {
-//     await _batchBox.put(batch.batchId, batch);
-//     return batch;
-//   }
+  //Open all boxes
+  Future<void> _openBoxes() async {
+    await Hive.openBox<UserHiveModel>(HiveTableConstant.userTable);
+    await Hive.openBox<AuthHiveModel>(HiveTableConstant.authTable);
+  }
 
-//   //Get all batches
-//   List<BatchHiveModel> getAllBatches() {
-//     return _batchBox.values.toList();
-//   }
+  //Create a new user
+  Future<UserHiveModel> createuser(UserHiveModel user) async {
+    await _userBox.put(user.userId, user);
+    return user;
+  }
 
-//   //Get batch by ID
-//   Future<BatchHiveModel> getBatchById(String batchId) {
-//     final batch = _batchBox.get(batchId);
-//     if (batch == null) {
-//       throw Exception('Batch with ID $batchId not found');
-//     }
-//     return Future.value(batch);
-//   }
+  //Get all useres
+  List<UserHiveModel> getAlluseres() {
+    return _userBox.values.toList();
+  }
 
-//   //Update a batch
-//   Future<void> updateBatch(BatchHiveModel batch) async {
-//     await _batchBox.put(batch.batchId, batch);
-//   }
+  //Get user by ID
+  Future<UserHiveModel> getuserById(String userId) {
+    final user = _userBox.get(userId);
+    if (user == null) {
+      throw Exception('user with ID $userId not found');
+    }
+    return Future.value(user);
+  }
 
-//   //Delete a batch
-//   Future<void> deleteBatch(String batchId) async {
-//     await _batchBox.delete(batchId);
-//   }
+  //Update a user
+  Future<void> updateuser(UserHiveModel user) async {
+    await _userBox.put(user.userId, user);
+  }
 
-//   //Delete all batches
-//   Future<void> deleteAllBatches() async {
-//     await _batchBox.clear();
-//   }
+  //Delete a user
+  Future<void> deleteuser(String userId) async {
+    await _userBox.delete(userId);
+  }
 
-//   //Close all boxes
-//   Future<void> close() async {
-//     await Hive.close();
-//   }
-// }
+  //Delete all useres
+  Future<void> deleteAlluseres() async {
+    await _userBox.clear();
+  }
+
+  //Close all boxes
+  Future<void> close() async {
+    await Hive.close();
+  }
+
+  //-----------------Auth Queries
+  Box<AuthHiveModel> get _authBox =>
+  Hive.box<AuthHiveModel>(HiveTableConstant.authTable);
+
+  Future<AuthHiveModel> registerUser(AuthHiveModel model) async{
+    await _authBox.put(model.authId, model);
+    return model;
+  }
+
+  //Login
+  Future<AuthHiveModel?> loginUser(String email,String password) async{
+    final users = _authBox.values.where((user) => user.email == email && user.password == password);
+    if(users.isNotEmpty){
+      return users.first;
+    }
+    return null;
+  }
+  //logout 
+  Future<void> logoutUser(String authId) async{
+    await _authBox.delete(authId);
+  }
+
+  //get current user
+  AuthHiveModel? getCurrentUser(String authId){
+    return _authBox.get(authId);
+  }
+
+  bool isEmailExists(String email) {
+    final users = _authBox.values.where((user) => user.email == email);
+    return users.isNotEmpty;
+  }
+}
