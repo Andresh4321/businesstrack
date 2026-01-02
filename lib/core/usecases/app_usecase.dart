@@ -3,9 +3,9 @@ import 'package:dartz/dartz.dart';
 
 
 abstract interface class UsecasewithParams<SuccessType, Params> {
-  Future<Either<Failure, SuccessType>> createBatch(Params params);
+  Future<Either<Failure, SuccessType>> createuser(Params params);
 }
 
 abstract interface class UsecasewithoutParams<SuccessType> {
-  Future<Either<Failure, SuccessType>> createBatch();
+  Future<Either<Failure, SuccessType>> createuser();
 }
