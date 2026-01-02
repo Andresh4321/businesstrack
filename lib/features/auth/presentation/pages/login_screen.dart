@@ -1,23 +1,45 @@
 import 'package:businesstrack/app/myapp.dart';
 import 'package:businesstrack/core/utils/BottomNavigaiton.dart';
-import 'package:businesstrack/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:businesstrack/features/auth/presentation/pages/signup_screen.dart';
+import 'package:businesstrack/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:businesstrack/features/auth/presentation/state/auth.state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
+    final authState = ref.watch(authViewModelProvider);
+
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.authenticated) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const BottomNavigaiton()),
+        );
+      } else if (next.status == AuthStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.errorMessage ?? 'Login failed')),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -25,9 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.only(top: 40),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 500, // <--- makes it scale beautifully on tablets
-            ),
+            constraints: const BoxConstraints(maxWidth: 500),
             child: Container(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -140,6 +160,54 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+                    // width: double.infinity,
+                    // child: ElevatedButton(
+                    //   onPressed: authState.status == AuthStatus.loading
+                    //       ? null
+                    //       : () {
+                    //           if (emailController.text.isEmpty ||
+                    //               passwordController.text.isEmpty) {
+                    //             ScaffoldMessenger.of(context).showSnackBar(
+                    //               const SnackBar(
+                    //                 content: Text("Fill all fields"),
+                    //               ),
+                    //             );
+                    //             return;
+                    //           }
+
+                    //           ref
+                    //               .read(authViewModelProvider.notifier)
+                    //               .login(
+                    //                 email: emailController.text.trim(),
+                    //                 password: passwordController.text.trim(),
+                    //               );
+                    //         },
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: const Color(0xff4f46e5),
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(6),
+                    //     ),
+                    //   ),
+                    //   child: authState.status == AuthStatus.loading
+                    //       ? const SizedBox(
+                    //           width: 24,
+                    //           height: 24,
+                    //           child: CircularProgressIndicator(
+                    //             strokeWidth: 2,
+                    //             valueColor: AlwaysStoppedAnimation<Color>(
+                    //               Colors.white,
+                    //             ),
+                    //           ),
+                    //         )
+                    //       : const Text(
+                    //           "Sign In",
+                    //           style: TextStyle(
+                    //             fontWeight: FontWeight.w600,
+                    //             color: Colors.white,
+                    //             fontSize: 14,
+                    //           ),
+                    //         ),
+                    // ),
                   ),
                   const SizedBox(height: 20),
 
