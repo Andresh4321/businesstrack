@@ -1,15 +1,18 @@
 import 'package:businesstrack/features/auth/presentation/pages/login_screen.dart';
 import 'package:businesstrack/features/auth/presentation/widgets/textfield.dart';
+import 'package:businesstrack/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:businesstrack/features/auth/presentation/state/auth.state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -19,6 +22,23 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final authState = ref.watch(authViewModelProvider);
+
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.errorMessage ?? 'Registration failed')),
+        );
+      } else if (next.status == AuthStatus.registered) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -40,7 +60,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40), 
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: Container(
@@ -85,9 +105,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                       Text(
                         "BusinessTrack",
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
@@ -130,9 +148,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         icon: Icons.lock,
                         obscureText: true,
                       ),
-                      const SizedBox(height:24),
+                      const SizedBox(height: 24),
                       SizedBox(
-                        width: double.infinity,
+                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
                           onPressed: () {
@@ -147,6 +165,38 @@ class _SignupScreenState extends State<SignupScreen> {
                           },
                           child: const Text("Create Account"),
                         ),
+                        // width: double.infinity,
+                        // height: 48,
+                      //   child: ElevatedButton(
+                      //     onPressed: authState.status == AuthStatus.loading
+                      //         ? null
+                      //         : () {
+                      //             if (_formKey.currentState!.validate()) {
+                      //               ref
+                      //                   .read(authViewModelProvider.notifier)
+                      //                   .register(
+                      //                     fullName: nameController.text.trim(),
+                      //                     email: emailController.text.trim(),
+                      //                     username: nameController.text
+                      //                         .trim()
+                      //                         .split('@')
+                      //                         .first,
+                      //                     password: passwordController.text,
+                      //                     phoneNumber: phoneController.text
+                      //                         .trim(),
+                      //                   );
+                      //             }
+                      //           },
+                      //     child: authState.status == AuthStatus.loading
+                      //         ? const SizedBox(
+                      //             width: 20,
+                      //             height: 20,
+                      //             child: CircularProgressIndicator(
+                      //               strokeWidth: 2,
+                      //             ),
+                      //           )
+                      //         : const Text("Create Account"),
+                      //   ),
                       ),
                       const SizedBox(height: 16),
 
@@ -161,12 +211,11 @@ class _SignupScreenState extends State<SignupScreen> {
                             onTap: () => Navigator.pop(context),
                             child: Text(
                               "Login",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontWeight: FontWeight.w600,
                                     decoration: TextDecoration.underline,
                                   ),
