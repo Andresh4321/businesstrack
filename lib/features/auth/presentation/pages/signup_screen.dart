@@ -20,25 +20,44 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+
+    /// Listen to Auth Changes (Safe - Not inside build)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+        if (next.status == AuthStatus.error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(next.errorMessage ?? 'Registration failed')),
+          );
+        } else if (next.status == AuthStatus.registered) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful')),
+          );
+
+          // Navigate to LoginScreen (no prefilled data)
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+          );
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = ref.watch(authViewModelProvider);
-
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.status == AuthStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage ?? 'Registration failed')),
-        );
-      } else if (next.status == AuthStatus.registered) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -64,10 +83,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Theme.of(context).colorScheme.surface
@@ -115,6 +131,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       const SizedBox(height: 28),
 
+                      // Full Name
                       Textfield(
                         controller: nameController,
                         label: "Full Name",
@@ -123,6 +140,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Phone Number
                       Textfield(
                         controller: phoneController,
                         label: "Phone Number",
@@ -132,6 +150,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Email
                       Textfield(
                         controller: emailController,
                         label: "Email",
@@ -141,6 +160,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Password
                       Textfield(
                         controller: passwordController,
                         label: "Password",
@@ -148,58 +168,48 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         icon: Icons.lock,
                         obscureText: true,
                       ),
+
                       const SizedBox(height: 24),
+
+                      // Signup Button
                       SizedBox(
-                         width: double.infinity,
+                        width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LoginScreen(),
-                                ),
-                              );
-                            }
-                          },
-                          child: const Text("Create Account"),
+                          onPressed: authState.status == AuthStatus.loading
+                              ? null
+                              : () {
+                                  if (_formKey.currentState!.validate()) {
+                                    ref
+                                        .read(authViewModelProvider.notifier)
+                                        .register(
+                                          fullName: nameController.text.trim(),
+                                          email: emailController.text.trim(),
+                                          username: nameController.text
+                                              .trim()
+                                              .split('@')
+                                              .first,
+                                          password: passwordController.text,
+                                          phoneNumber:
+                                              phoneController.text.trim(),
+                                        );
+                                  }
+                                },
+                          child: authState.status == AuthStatus.loading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text("Create Account"),
                         ),
-                        // width: double.infinity,
-                        // height: 48,
-                      //   child: ElevatedButton(
-                      //     onPressed: authState.status == AuthStatus.loading
-                      //         ? null
-                      //         : () {
-                      //             if (_formKey.currentState!.validate()) {
-                      //               ref
-                      //                   .read(authViewModelProvider.notifier)
-                      //                   .register(
-                      //                     fullName: nameController.text.trim(),
-                      //                     email: emailController.text.trim(),
-                      //                     username: nameController.text
-                      //                         .trim()
-                      //                         .split('@')
-                      //                         .first,
-                      //                     password: passwordController.text,
-                      //                     phoneNumber: phoneController.text
-                      //                         .trim(),
-                      //                   );
-                      //             }
-                      //           },
-                      //     child: authState.status == AuthStatus.loading
-                      //         ? const SizedBox(
-                      //             width: 20,
-                      //             height: 20,
-                      //             child: CircularProgressIndicator(
-                      //               strokeWidth: 2,
-                      //             ),
-                      //           )
-                      //         : const Text("Create Account"),
-                      //   ),
                       ),
+
                       const SizedBox(height: 16),
 
+                      // Already have an account?
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -211,11 +221,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             onTap: () => Navigator.pop(context),
                             child: Text(
                               "Login",
-                              style: Theme.of(context).textTheme.bodyMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
                                   ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
+                                    color: Theme.of(context).colorScheme.primary,
                                     fontWeight: FontWeight.w600,
                                     decoration: TextDecoration.underline,
                                   ),

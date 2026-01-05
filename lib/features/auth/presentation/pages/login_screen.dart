@@ -130,84 +130,52 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (emailController.text.isEmpty ||
-                            passwordController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Fill all fields")),
-                          );
-                          return;
-                        }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BottomNavigaiton(),
-                          ),
-                        );
-                      },
+                      onPressed: authState.status == AuthStatus.loading
+                          ? null
+                          : () {
+                              if (emailController.text.isEmpty ||
+                                  passwordController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Fill all fields"),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              ref
+                                  .read(authViewModelProvider.notifier)
+                                  .login(
+                                    email: emailController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                  );
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xff4f46e5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-                      child: const Text(
-                        "Sign In",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
+                      child: authState.status == AuthStatus.loading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              "Sign In",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
                     ),
-                    // width: double.infinity,
-                    // child: ElevatedButton(
-                    //   onPressed: authState.status == AuthStatus.loading
-                    //       ? null
-                    //       : () {
-                    //           if (emailController.text.isEmpty ||
-                    //               passwordController.text.isEmpty) {
-                    //             ScaffoldMessenger.of(context).showSnackBar(
-                    //               const SnackBar(
-                    //                 content: Text("Fill all fields"),
-                    //               ),
-                    //             );
-                    //             return;
-                    //           }
-
-                    //           ref
-                    //               .read(authViewModelProvider.notifier)
-                    //               .login(
-                    //                 email: emailController.text.trim(),
-                    //                 password: passwordController.text.trim(),
-                    //               );
-                    //         },
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: const Color(0xff4f46e5),
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(6),
-                    //     ),
-                    //   ),
-                    //   child: authState.status == AuthStatus.loading
-                    //       ? const SizedBox(
-                    //           width: 24,
-                    //           height: 24,
-                    //           child: CircularProgressIndicator(
-                    //             strokeWidth: 2,
-                    //             valueColor: AlwaysStoppedAnimation<Color>(
-                    //               Colors.white,
-                    //             ),
-                    //           ),
-                    //         )
-                    //       : const Text(
-                    //           "Sign In",
-                    //           style: TextStyle(
-                    //             fontWeight: FontWeight.w600,
-                    //             color: Colors.white,
-                    //             fontSize: 14,
-                    //           ),
-                    //         ),
-                    // ),
                   ),
                   const SizedBox(height: 20),
 

@@ -80,14 +80,16 @@ class AuthLocalDatasource implements IAuthDataSource{
   }
   
   @override
-  Future<bool> register(AuthHiveModel model) async {
-    try{
-       await _hiveService.registerUser( model);
-      return Future.value(true);
-    }catch(e){
-      return Future.value(false);
-    } 
+Future<bool> register(AuthHiveModel model) async {
+  try {
+    await _hiveService.registerUser(model);
+    return true;
+  } catch (e) {
+    print("REGISTER ERROR: $e");
+    return false;
   }
+}
+
   
   @override
   Future<bool> isEmailExists(String email) {
