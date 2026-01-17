@@ -1,4 +1,5 @@
 import 'package:businesstrack/app/myapp.dart';
+import 'package:businesstrack/features/auth/presentation/pages/login_screen.dart';
 import 'package:businesstrack/features/dashboard/presentation/widgets/module_button.dart';
 import 'package:businesstrack/features/dashboard/presentation/widgets/overview_tab.dart';
 import 'package:flutter/material.dart';
@@ -65,14 +66,16 @@ class DashboardScreen extends StatelessWidget {
           // Theme switch
           IconButton(
             icon: Icon(
-              brightness == Brightness.dark ? Icons.light_mode : Icons.dark_mode,
+              brightness == Brightness.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
               color: theme.iconTheme.color,
             ),
             onPressed: () {
               MyApp.themeNotifier.value =
                   MyApp.themeNotifier.value == ThemeMode.light
-                      ? ThemeMode.dark
-                      : ThemeMode.light;
+                  ? ThemeMode.dark
+                  : ThemeMode.light;
             },
           ),
           // Notification icon
@@ -80,7 +83,14 @@ class DashboardScreen extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(Icons.notifications, color: theme.iconTheme.color),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
               ),
               Positioned(
                 right: 8,
@@ -91,7 +101,10 @@ class DashboardScreen extends StatelessWidget {
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
                   child: const Text(
                     '3',
                     style: TextStyle(
@@ -123,7 +136,9 @@ class DashboardScreen extends StatelessWidget {
                 'Here\'s your production overview,',
                 style: textTheme.bodyMedium?.copyWith(
                   fontSize: 16,
-                  color: brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600],
+                  color: brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[600],
                 ),
               ),
               const SizedBox(height: 24),

@@ -24,7 +24,7 @@ class LoginUsecaseParams extends Equatable {
 
 //Provider for loginusecase
 final LoginUsecaseProvider = Provider<LoginUsecase>((ref) {
-  final authRepository = ref.read(AuthRepositoryProvider);
+  final authRepository = ref.read(authRepositoryProvider);
   return LoginUsecase(authRepository: authRepository);
 });
 class LoginUsecase implements UsecasewithParams<AuthEntity, LoginUsecaseParams>{

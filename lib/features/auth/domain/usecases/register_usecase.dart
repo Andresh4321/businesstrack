@@ -12,25 +12,22 @@ class RegisterUsecaseParams extends Equatable {
   final String email;
   final String? phoneNumber;
   final String password;
-
+ final String? confirmPassword;
+ 
   const RegisterUsecaseParams({
     required this.fullName,
     required this.email,
     this.phoneNumber,
+    this.confirmPassword,
     required this.password,
   });
 
   @override
-  List<Object?> get props => [
-        fullName,
-        email,
-        phoneNumber,
-        password,
-      ];
+  List<Object?> get props => [fullName, email, phoneNumber, password,confirmPassword];
 }
 
 final registerUseCaseProvider = Provider<RegisterUsecase>((ref) {
-  final authRepository = ref.read(AuthRepositoryProvider);
+  final authRepository = ref.read(authRepositoryProvider);
   return RegisterUsecase(authRepository: authRepository);
 });
 
@@ -39,7 +36,7 @@ class RegisterUsecase
   final IAuthRespository _authRepository;
 
   RegisterUsecase({required IAuthRespository authRepository})
-      : _authRepository = authRepository;
+    : _authRepository = authRepository;
 
   @override
   Future<Either<Failure, bool>> call(RegisterUsecaseParams params) {
@@ -48,11 +45,12 @@ class RegisterUsecase
       email: params.email,
       phoneNumber: params.phoneNumber,
       password: params.password,
+      confirmPassword:params.confirmPassword
     );
 
     return _authRepository.register(entity);
   }
-  
+
   @override
   Future<Either<Failure, bool>> createuser(RegisterUsecaseParams params) {
     // TODO: implement createuser

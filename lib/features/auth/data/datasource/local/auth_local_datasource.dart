@@ -1,5 +1,5 @@
 import 'package:businesstrack/core/services/hive/Hive_Service.dart';
-import 'package:businesstrack/features/auth/data/datasource/remote/auth_datasource.dart';
+import 'package:businesstrack/features/auth/data/datasource/auth_datasource.dart';
 import 'package:businesstrack/features/auth/data/models/auth_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,8 +63,7 @@ class AuthLocalDatasource implements IAuthDataSource{
 
   @override
   Future<bool> logOut() {
-    // TODO: implement logOut
-    throw UnimplementedError();
+     throw UnimplementedError();
   }
   
   @override
