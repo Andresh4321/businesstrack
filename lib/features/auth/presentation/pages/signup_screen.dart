@@ -18,6 +18,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -51,6 +53,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     phoneController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -83,7 +86,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Theme.of(context).colorScheme.surface
@@ -168,7 +174,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         icon: Icons.lock,
                         obscureText: true,
                       ),
+                      const SizedBox(height: 16),
 
+                      TextFormField(
+                        controller: confirmPasswordController,
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Please confirm your password";
+                          }
+                          if (value != passwordController.text) {
+                            return "Passwords do not match";
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Confirm Password",
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 24),
 
                       // Signup Button
@@ -190,8 +217,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                               .split('@')
                                               .first,
                                           password: passwordController.text,
-                                          phoneNumber:
-                                              phoneController.text.trim(),
+                                          confirmPassword:
+                                              confirmPasswordController.text,
+                                          phoneNumber: phoneController.text
+                                              .trim(),
                                         );
                                   }
                                 },
@@ -221,11 +250,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             onTap: () => Navigator.pop(context),
                             child: Text(
                               "Login",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontWeight: FontWeight.w600,
                                     decoration: TextDecoration.underline,
                                   ),
