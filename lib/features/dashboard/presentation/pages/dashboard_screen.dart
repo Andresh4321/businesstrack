@@ -2,6 +2,7 @@ import 'package:businesstrack/app/myapp.dart';
 import 'package:businesstrack/features/auth/presentation/pages/login_screen.dart';
 import 'package:businesstrack/features/dashboard/presentation/widgets/module_button.dart';
 import 'package:businesstrack/features/dashboard/presentation/widgets/overview_tab.dart';
+import 'package:businesstrack/features/users/presentation/pages/setting_screen.dart';
 import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -88,6 +89,17 @@ class DashboardScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.settings, color: theme.iconTheme.color),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingScreen(),
                     ),
                   );
                 },
