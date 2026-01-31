@@ -1,6 +1,6 @@
 
 import 'package:businesstrack/core/services/hive/Hive_Service.dart';
-import 'package:businesstrack/features/users/data/datasources/remote/user_datasource.dart';
+import 'package:businesstrack/features/users/data/datasources/user_datasource.dart';
 import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
