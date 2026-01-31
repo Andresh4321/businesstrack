@@ -1,12 +1,59 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+
 class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL - change this for production
   // static const String baseUrl = 'http://10.0.2.2:5000/api/v1';
-  //static const String baseUrl = 'http://localhost:5000/api/v1';
+  // static const String baseUrl = 'http://localhost:5000/api/v1';
   // For Android Emulator use: 'http://10.0.2.2:5000/api/v1'
   // For Physical Device use your computer's IP: 'http://192.168.x.x:5000/api/v1'
-  static const String baseUrl = 'http://192.168.1.27:5000/api/v1';
+
+  // static const String baseUrl = 'http://192.168.1.27:5000/api/v1';
+
+  //  static const bool isPysicalDevice = false;
+
+  // static const String compIpAddress = "192.168.1.1";
+
+  // static String get baseURl {
+  //   if (isPysicalDevice) {
+  //     return 'http://$compIpAddress:5000/api/v1';
+  //     }
+  //    // yadi andriod
+  //    if(KisWeb){
+  //     return "http:/localhost:3000/api/v1";
+  //    }else if(Platform.isAndriod){
+  //     return 'http://10.0.2.2:3000/api/v1';
+  //    }
+  //    else if(Platform.isAndriod){
+  //     return 'http://localhost:3000/api/v1';
+  //   }else{
+  //  return 'http://localhost:3000/api/v1';
+  //   }
+
+    // Base URL for backend
+  static String get baseUrl {
+    // Web
+    if (kIsWeb) {
+      return 'http://localhost:5000/api/v1';
+    }
+
+    // Android Emulator
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:5000/api/v1';
+    }
+
+    // iOS Simulator
+    if (Platform.isIOS) {
+      return 'http://localhost:5000/api/v1';
+    }
+
+    // Physical device on the same network
+    // Replace with your computer IP
+    return 'http://192.168.1.27:5000/api/v1';
+  }
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -25,6 +72,8 @@ class ApiEndpoints {
   static const String studentRegister = '/auth/register';
   static String studentById(String id) => '/students/$id';
   static String studentPhoto(String id) => '/students/$id/photo';
+  static String imageUploadPhoto = '/auth/upload-photo';
+  static String itemUploadVideo = '/auth/upload-video';
 
   // ============ Item Endpoints ============
   static const String items = '/items';
