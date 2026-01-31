@@ -1,5 +1,6 @@
 import 'package:businesstrack/core/api/api_client.dart';
 import 'package:businesstrack/core/api/api_endpoints.dart';
+import 'package:businesstrack/core/services/storage/token_service.dart';
 import 'package:businesstrack/core/services/storage/user_session_service.dart';
 import 'package:businesstrack/features/auth/data/datasource/auth_datasource.dart';
 import 'package:businesstrack/features/auth/data/models/auth_hive_model.dart';
@@ -11,18 +12,22 @@ final authRemoteProvider = Provider<IAuthRemoteDataSource>((ref) {
   return Authremotedatasource(
     apiClient: ref.read(apiClientProvider),
     userSessionService: ref.read(userSessionServiceProvider),
+    tokenService: ref.read(tokenServiceProvider),
   );
 });
 
 class Authremotedatasource implements IAuthRemoteDataSource {
   final ApiClient _apiClient;
   final UserSessionService _userSessionService;
+  final TokenService _tokenService;
 
   Authremotedatasource({
     required ApiClient apiClient,
     required UserSessionService userSessionService,
+    required TokenService tokenService,
   }) : _apiClient = apiClient,
-       _userSessionService = userSessionService;
+       _userSessionService = userSessionService,
+       _tokenService = tokenService;
 
   @override
   Future<bool> deleteUser(String authId) {
@@ -65,6 +70,9 @@ class Authremotedatasource implements IAuthRemoteDataSource {
           email: user.email,
           fullName: user.fullName,
         );
+        //save token
+        final token = response.data['token'] as String?;
+        await _tokenService.saveToken(token!);
         return user;
       }
       return null;

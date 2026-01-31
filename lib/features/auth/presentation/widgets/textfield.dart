@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class Textfield extends StatelessWidget {
+class TextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String hint;
@@ -8,7 +8,7 @@ class Textfield extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
 
-  const Textfield({
+  const TextField({
     super.key,
     required this.controller,
     required this.label,
