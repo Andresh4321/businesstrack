@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:businesstrack/core/error/failures.dart';
+import 'package:businesstrack/core/services/connectivity/network_info.dart';
 import 'package:businesstrack/features/users/data/datasources/local/user_local_datasource.dart';
-import 'package:businesstrack/features/users/data/datasources/remote/user_datasource.dart';
+import 'package:businesstrack/features/users/data/datasources/remote/user_remote_datasource.dart';
+import 'package:businesstrack/features/users/data/datasources/user_datasource.dart';
 import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
 import 'package:businesstrack/features/users/domain/entities/user_entity.dart';
 import 'package:businesstrack/features/users/domain/repositories/user_repository.dart';
@@ -10,15 +14,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 //internet on
 
-final UserRepositoryProvider = Provider<IUserRespository>((ref){
-  return UserRepository(datasource: ref.read(userLocalDatasourceProvider));
+final UserRepositoryProvider = Provider<IUserRespository>((ref) {
+  return UserRepository(
+    datasource: ref.read(userLocalDatasourceProvider),
+    networkInfo: ref.read(networkInfoProvider),
+    remoteDatasource: ref.read(IUserRemoteDatasourceProvider),
+  );
 });
 
 class UserRepository implements IUserRespository {
   final IUserDatasource _datasource;
+  final NetworkInfo _networkInfo;
+  final IUserRemoteDatasource _remoteDatasource;
 
-  UserRepository({required IUserDatasource datasource})
-    : _datasource = datasource;
+  UserRepository({
+    required IUserDatasource datasource,
+    required NetworkInfo networkInfo,
+    required IUserRemoteDatasource remoteDatasource,
+  }) : _datasource = datasource,
+       _networkInfo = networkInfo,
+       _remoteDatasource = remoteDatasource;
 
   @override
   Future<Either<Failure, bool>> createuser(UserEntity user) async {
@@ -31,9 +46,7 @@ class UserRepository implements IUserRespository {
         return const Right(true);
       }
 
-      return const Left(
-        LocalDatabaseFailure(messgae: 'Failed to create user'),
-      );
+      return const Left(LocalDatabaseFailure(messgae: 'Failed to create user'));
     } catch (e) {
       return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
@@ -42,18 +55,18 @@ class UserRepository implements IUserRespository {
   @override
   Future<Either<Failure, bool>> deleteuser(String userId) async {
     try {
-    final result = await _datasource.deleteuser(userId);
+      final result = await _datasource.deleteuser(userId);
 
-    if (result) {
-      return const Right(true);
-    } else {
-      return const Left(LocalDatabaseFailure(messgae: 'Failed to delete user'));
+      if (result) {
+        return const Right(true);
+      } else {
+        return const Left(
+          LocalDatabaseFailure(messgae: 'Failed to delete user'),
+        );
+      }
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
-  } catch (e) {
-    return Left(LocalDatabaseFailure(messgae: e.toString()));
-  }
-
-
   }
 
   @override
@@ -91,12 +104,23 @@ class UserRepository implements IUserRespository {
         return const Right(true);
       }
 
-      return const Left(
-        LocalDatabaseFailure(messgae: 'Failed to update user'),
-      );
+      return const Left(LocalDatabaseFailure(messgae: 'Failed to update user'));
     } catch (e) {
       return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
-  
+
+  @override
+  Future<Either<Failure, String>> uploadImage(File image) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final fileName = await _remoteDatasource.uploadImage(image);
+        return Right(fileName);
+      } catch (e) {
+        return Left(Apifailure(message: e.toString()));
+      }
+    } else {
+      return Left(Apifailure(message: "No internet conection"));
+    }
+  }
 }
