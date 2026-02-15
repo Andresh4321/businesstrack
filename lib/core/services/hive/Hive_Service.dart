@@ -1,5 +1,6 @@
 import 'package:businesstrack/core/constants/hive_table_constant.dart';
 import 'package:businesstrack/features/auth/data/models/auth_hive_model.dart';
+import 'package:businesstrack/features/supplier/data/models/supplier_hive_model.dart';
 import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -48,12 +49,17 @@ class HiveService {
     if (!Hive.isAdapterRegistered(HiveTableConstant.authTypeId)) {
       Hive.registerAdapter(AuthHiveModelAdapter());
     }
+
+    if (!Hive.isAdapterRegistered(HiveTableConstant.supplierTypeId)) {
+      Hive.registerAdapter(SupplierHiveModelAdapter());
+    }
   }
 
   //Open all boxes
   Future<void> _openBoxes() async {
     await Hive.openBox<UserHiveModel>(HiveTableConstant.userTable);
     await Hive.openBox<AuthHiveModel>(HiveTableConstant.authTable);
+    await Hive.openBox<SupplierHiveModel>(HiveTableConstant.suppliersTable);
   }
 
   //Create a new user
@@ -98,33 +104,88 @@ class HiveService {
 
   //-----------------Auth Queries
   Box<AuthHiveModel> get _authBox =>
-  Hive.box<AuthHiveModel>(HiveTableConstant.authTable);
+      Hive.box<AuthHiveModel>(HiveTableConstant.authTable);
 
-  Future<AuthHiveModel> registerUser(AuthHiveModel model) async{
+  Future<AuthHiveModel> registerUser(AuthHiveModel model) async {
     await _authBox.put(model.authId, model);
     return model;
   }
 
   //Login
-  Future<AuthHiveModel?> loginUser(String email,String password) async{
-    final users = _authBox.values.where((user) => user.email == email && user.password == password);
-    if(users.isNotEmpty){
+  Future<AuthHiveModel?> loginUser(String email, String password) async {
+    final users = _authBox.values.where(
+      (user) => user.email == email && user.password == password,
+    );
+    if (users.isNotEmpty) {
       return users.first;
     }
     return null;
   }
-  //logout 
-  Future<void> logoutUser(String authId) async{
+
+  //logout
+  Future<void> logoutUser(String authId) async {
     await _authBox.delete(authId);
   }
 
   //get current user
-  AuthHiveModel? getCurrentUser(String authId){
+  AuthHiveModel? getCurrentUser(String authId) {
     return _authBox.get(authId);
   }
 
   bool isEmailExists(String email) {
     final users = _authBox.values.where((user) => user.email == email);
     return users.isNotEmpty;
+  }
+
+  //-----------------Supplier Queries
+  Box<SupplierHiveModel> get _supplierBox =>
+      Hive.box<SupplierHiveModel>(HiveTableConstant.suppliersTable);
+
+  /// Create a new supplier for a user
+  Future<SupplierHiveModel> createSupplier(
+    SupplierHiveModel supplier,
+    String userId,
+  ) async {
+    final key = '${userId}_${supplier.id}';
+    await _supplierBox.put(key, supplier);
+    return supplier;
+  }
+
+  /// Get all suppliers for a specific user
+  List<SupplierHiveModel> getSuppliersByUserId(String userId) {
+    return _supplierBox.values
+        .where((supplier) => supplier.id.startsWith(userId))
+        .toList();
+  }
+
+  /// Get a specific supplier by ID for a user
+  Future<SupplierHiveModel?> getSupplierById(
+    String supplierId,
+    String userId,
+  ) async {
+    final key = '${userId}_$supplierId';
+    return _supplierBox.get(key);
+  }
+
+  /// Update a supplier
+  Future<void> updateSupplier(SupplierHiveModel supplier, String userId) async {
+    final key = '${userId}_${supplier.id}';
+    await _supplierBox.put(key, supplier);
+  }
+
+  /// Delete a supplier
+  Future<void> deleteSupplier(String supplierId, String userId) async {
+    final key = '${userId}_$supplierId';
+    await _supplierBox.delete(key);
+  }
+
+  /// Delete all suppliers for a user
+  Future<void> deleteAllSuppliersByUserId(String userId) async {
+    final keys = _supplierBox.keys
+        .where((key) => key.toString().startsWith(userId))
+        .toList();
+    for (var key in keys) {
+      await _supplierBox.delete(key);
+    }
   }
 }
