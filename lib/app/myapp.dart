@@ -1,6 +1,8 @@
 import 'package:businesstrack/features/auth/presentation/pages/login_screen.dart';
 import 'package:businesstrack/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:businesstrack/app/theme/themefont.dart';
+import 'package:businesstrack/features/supplier/presentation/pages/supplier_list_page.dart';
+
 import 'package:businesstrack/features/users/presentation/pages/setting_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -28,7 +30,7 @@ class _MyAppState extends State<MyApp> {
           theme: theme.lightTheme,
           darkTheme: theme.darkTheme,
           themeMode: mode,
-          home: const LoginScreen(),
+          home: SupplierListPage(userId: "6990a8b6c6b613e7c98648c2"),
         );
       },
     );

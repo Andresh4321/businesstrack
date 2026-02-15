@@ -2,6 +2,7 @@ import 'package:businesstrack/features/auth/presentation/pages/login_screen.dart
 import 'package:businesstrack/features/auth/presentation/pages/signup_screen.dart';
 import 'package:businesstrack/features/auth/presentation/widgets/TextField.dart';
 import 'package:businesstrack/features/auth/presentation/widgets/Textfield.dart';
+import 'package:businesstrack/features/auth/presentation/widgets/text_layout.dart';
 import 'package:businesstrack/features/users/presentation/pages/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,8 +18,8 @@ void main() {
   await tester.pumpAndSettle();
 
   // Instead of counting TextField by type, check by label text
-  expect(find.widgetWithText(Textfield, 'Email Address'), findsOneWidget);
-  expect(find.widgetWithText(Textfield, 'Password'), findsOneWidget);
+  expect(find.widgetWithText(TextLayout, 'Email Address'), findsOneWidget);
+  expect(find.widgetWithText(TextLayout, 'Password'), findsOneWidget);
 
   // Check Sign In button exists
   // expect(find.widgetWithText(ElevatedButton, 'Sign In'), findsOneWidget);

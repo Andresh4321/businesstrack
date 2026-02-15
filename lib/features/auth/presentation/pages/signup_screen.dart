@@ -1,8 +1,7 @@
 import 'package:businesstrack/features/auth/presentation/pages/login_screen.dart';
-import 'package:businesstrack/features/auth/presentation/widgets/TextField.dart';
 import 'package:businesstrack/features/auth/presentation/view_model/auth_viewmodel.dart';
 import 'package:businesstrack/features/auth/presentation/state/auth.state.dart';
-import 'package:businesstrack/features/auth/presentation/widgets/Textfield.dart';
+import 'package:businesstrack/features/auth/presentation/widgets/text_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
@@ -139,7 +138,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const SizedBox(height: 28),
 
                       // Full Name
-                      Textfield(
+                      TextLayout(
                         controller: nameController,
                         label: "Full Name",
                         hint: "Ram Shrestha",
@@ -148,7 +147,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const SizedBox(height: 16),
 
                       // Phone Number
-                      Textfield(
+                      TextLayout(
                         controller: phoneController,
                         label: "Phone Number",
                         hint: "+977",
@@ -158,7 +157,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const SizedBox(height: 16),
 
                       // Email
-                      Textfield(
+                      TextLayout(
                         controller: emailController,
                         label: "Email",
                         hint: "email.com",
@@ -168,7 +167,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const SizedBox(height: 16),
 
                       // Password
-                      Textfield(
+                      TextLayout(
                         controller: passwordController,
                         label: "Password",
                         hint: "••••••••",
