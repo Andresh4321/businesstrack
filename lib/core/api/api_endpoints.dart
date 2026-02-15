@@ -85,4 +85,13 @@ class ApiEndpoints {
   static String commentById(String id) => '/comments/$id';
   static String commentsByItem(String itemId) => '/comments/item/$itemId';
   static String commentLike(String id) => '/comments/$id/like';
+
+// ============ Supplier Endpoints ============
+  static const String suppliers = '/suppliers';
+  static String supplierById(String id) => '/suppliers/$id';
+  static String supplierByName(String name) => '/suppliers/name/$name';
+  static String supplierByProduct(String product) => '/suppliers/product/$product';
+  static String supplierDelete(String id) => '/suppliers/$id';
+  static String supplierUpdate(String id) => '/suppliers/$id';
+  static String supplierAdd() => '/suppliers';
 }
