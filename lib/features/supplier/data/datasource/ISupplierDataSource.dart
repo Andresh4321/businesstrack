@@ -23,6 +23,7 @@ abstract interface class ISupplierRemoteDataSource {
   Future<List<SupplierEntity>> searchSuppliersByName(
     String name,
     String userId,
+    String? lastId,
   );
   Future<List<SupplierEntity>> searchSuppliersByProduct(
     String productName,
