@@ -1,17 +1,21 @@
 class MaterialModel {
   final String id;
-  final String name;
-  final double currentStock;
-  final double minimumStock;
-  final String unit;
-  final double costPerUnit;
+  String name;
+  String unit;
+  double quantity;
+  double costPerUnit;
+  double minimumStock;
 
   MaterialModel({
     required this.id,
     required this.name,
-    required this.currentStock,
-    required this.minimumStock,
     required this.unit,
+    required this.quantity,
     required this.costPerUnit,
+    required this.minimumStock,
   });
+
+  double get totalValue => quantity * costPerUnit;
+
+  bool get isLowStock => quantity <= minimumStock;
 }
