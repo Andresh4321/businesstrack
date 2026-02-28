@@ -1,0 +1,62 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'stock_model.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
+class StockModelAdapter extends TypeAdapter<StockModel> {
+  @override
+  final int typeId = 5;
+
+  @override
+  StockModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return StockModel(
+      stockId: fields[0] as String?,
+      materialId: (fields[1] as String?) ?? '',
+      quantity: (fields[2] as num?)?.toDouble() ?? 0.0,
+      transactionType: (fields[3] as String?) ?? 'in',
+      description: fields[4]?.toString(),
+      userId: fields[5]?.toString(),
+      createdAt: fields[6] as DateTime?,
+      updatedAt: fields[7] as DateTime?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, StockModel obj) {
+    writer
+      ..writeByte(8)
+      ..writeByte(0)
+      ..write(obj.stockId)
+      ..writeByte(1)
+      ..write(obj.materialId)
+      ..writeByte(2)
+      ..write(obj.quantity)
+      ..writeByte(3)
+      ..write(obj.transactionType)
+      ..writeByte(4)
+      ..write(obj.description)
+      ..writeByte(5)
+      ..write(obj.userId)
+      ..writeByte(6)
+      ..write(obj.createdAt)
+      ..writeByte(7)
+      ..write(obj.updatedAt);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StockModelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
