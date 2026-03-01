@@ -1,3 +1,4 @@
+import 'package:businesstrack/core/utils/responsive_helper.dart';
 import 'package:businesstrack/features/material/presentation/state/material_state.dart'
     as material_state_alias;
 import 'package:businesstrack/features/material/presentation/viewmodel/material_viewmodel.dart';
@@ -208,10 +209,19 @@ class _LowStockAlertPageState extends ConsumerState<LowStockAlertPage> {
           // Metrics Grid
           GridView.count(
             shrinkWrap: true,
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.3,
+            crossAxisCount: ResponsiveHelper.getGridCrossAxisCount(
+              context,
+              mobile: 2,
+              tablet: 4,
+              desktop: 4,
+            ),
+            mainAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+            crossAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+            childAspectRatio: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 1.3,
+              tablet: 1.4,
+            ),
             physics: const NeverScrollableScrollPhysics(),
             children: [
               _buildMetricCard(
@@ -956,11 +966,16 @@ class _LowStockAlertPageState extends ConsumerState<LowStockAlertPage> {
           physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           itemCount: items.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.0,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: ResponsiveHelper.getGridCrossAxisCount(
+              context,
+              mobile: 2,
+              tablet: 3,
+              desktop: 4,
+            ),
+            crossAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+            mainAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+            childAspectRatio: ResponsiveHelper.getCardAspectRatio(context),
           ),
           itemBuilder: (context, index) {
             final material = items[index];

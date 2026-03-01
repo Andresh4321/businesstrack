@@ -11,28 +11,21 @@ class UpdateSupplierParams extends Equatable {
   final String id;
   final String name;
   final String email;
-  final String contactName;
-  final List<String> productNames;
+  final String contactNumber;
+  final List<String> products;
   final String userId;
 
   const UpdateSupplierParams({
     required this.id,
     required this.name,
     required this.email,
-    required this.contactName,
-    required this.productNames,
+    required this.contactNumber,
+    required this.products,
     required this.userId,
   });
 
   @override
-  List<Object?> get props => [
-    id,
-    name,
-    email,
-    contactName,
-    productNames,
-    userId,
-  ];
+  List<Object?> get props => [id, name, email, contactNumber, products, userId];
 }
 
 class UpdateSupplierUsecase
@@ -48,8 +41,8 @@ class UpdateSupplierUsecase
       id: params.id,
       name: params.name,
       email: params.email,
-      contactName: params.contactName,
-      productNames: params.productNames,
+      contactNumber: params.contactNumber,
+      products: params.products,
       userId: params.userId,
     );
     return _supplierRepository.updateSupplier(entity, params.userId);

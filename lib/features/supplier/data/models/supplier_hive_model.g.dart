@@ -17,19 +17,21 @@ class SupplierHiveModelAdapter extends TypeAdapter<SupplierHiveModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return SupplierHiveModel(
-      id: fields[0] as String,
+      id: fields[0] as String?,
       name: fields[1] as String,
       email: fields[2] as String,
-      contactName: fields[3] as String,
-      productNames: (fields[4] as List).cast<String>(),
-      userId: fields[5] as String,
+      contactNumber: fields[3] as String,
+      products: (fields[4] as List).cast<String>(),
+      userId: fields[5] as String?,
+      createdAt: fields[6] as DateTime?,
+      updatedAt: fields[7] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SupplierHiveModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -37,11 +39,15 @@ class SupplierHiveModelAdapter extends TypeAdapter<SupplierHiveModel> {
       ..writeByte(2)
       ..write(obj.email)
       ..writeByte(3)
-      ..write(obj.contactName)
+      ..write(obj.contactNumber)
       ..writeByte(4)
-      ..write(obj.productNames)
+      ..write(obj.products)
       ..writeByte(5)
-      ..write(obj.userId);
+      ..write(obj.userId)
+      ..writeByte(6)
+      ..write(obj.createdAt)
+      ..writeByte(7)
+      ..write(obj.updatedAt);
   }
 
   @override

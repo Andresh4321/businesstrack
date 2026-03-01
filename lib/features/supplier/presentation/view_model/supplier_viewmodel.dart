@@ -1,4 +1,3 @@
-import 'package:businesstrack/features/supplier/domain/entities/supplier_entity.dart';
 import 'package:businesstrack/features/supplier/domain/usecases/addsupplier_usecase.dart';
 import 'package:businesstrack/features/supplier/domain/usecases/deletesupplier_usecase.dart';
 import 'package:businesstrack/features/supplier/domain/usecases/getAllsupplier_usecase.dart';
@@ -77,8 +76,8 @@ class SupplierViewmodel extends Notifier<SupplierState> {
   Future<void> addSupplier({
     required String name,
     required String email,
-    required String contactName,
-    required List<String> productNames,
+    required String contactNumber,
+    required List<String> products,
   }) async {
     if (_currentUserId.isEmpty) {
       state = state.copyWith(
@@ -94,8 +93,8 @@ class SupplierViewmodel extends Notifier<SupplierState> {
       AddSupplierParams(
         name: name,
         email: email,
-        contactName: contactName,
-        productNames: productNames,
+        contactNumber: contactNumber,
+        products: products,
         userId: _currentUserId,
       ),
     );
@@ -149,8 +148,8 @@ class SupplierViewmodel extends Notifier<SupplierState> {
     required String id,
     required String name,
     required String email,
-    required String contactName,
-    required List<String> productNames,
+    required String contactNumber,
+    required List<String> products,
   }) async {
     if (_currentUserId.isEmpty) {
       state = state.copyWith(
@@ -167,8 +166,8 @@ class SupplierViewmodel extends Notifier<SupplierState> {
         id: id,
         name: name,
         email: email,
-        contactName: contactName,
-        productNames: productNames,
+        contactNumber: contactNumber,
+        products: products,
         userId: _currentUserId,
       ),
     );

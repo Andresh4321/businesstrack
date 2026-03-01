@@ -1,20 +1,24 @@
 import 'package:equatable/equatable.dart';
 
 class SupplierEntity extends Equatable {
-  final String id;
+  final String? id;
   final String name;
   final String email;
-  final String contactName;
-  final List<String> productNames;
-  final String userId;
+  final String contactNumber;
+  final List<String> products;
+  final String? userId;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
-  SupplierEntity({
-    required this.id,
+  const SupplierEntity({
+    this.id,
     required this.name,
     required this.email,
-    required this.contactName,
-    required this.productNames,
-    required this.userId,
+    required this.contactNumber,
+    required this.products,
+    this.userId,
+    this.createdAt,
+    this.updatedAt,
   });
 
   @override
@@ -22,8 +26,10 @@ class SupplierEntity extends Equatable {
     id,
     name,
     email,
-    contactName,
-    productNames,
+    contactNumber,
+    products,
     userId,
+    createdAt,
+    updatedAt,
   ];
 }

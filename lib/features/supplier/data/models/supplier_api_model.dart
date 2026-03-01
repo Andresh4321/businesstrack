@@ -4,17 +4,21 @@ class SupplierApiModel {
   final String? id;
   final String name;
   final String email;
-  final String contactName;
-  final List<String> productNames;
-  final String userId;
+  final String contactNumber;
+  final List<String> products;
+  final String? userId;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   SupplierApiModel({
     this.id,
     required this.name,
     required this.email,
-    required this.contactName,
-    required this.productNames,
-    required this.userId,
+    required this.contactNumber,
+    required this.products,
+    this.userId,
+    this.createdAt,
+    this.updatedAt,
   });
 
   // Convert JSON → API Model
@@ -23,9 +27,15 @@ class SupplierApiModel {
       id: json['_id'] as String?,
       name: json['name'] as String,
       email: json['email'] as String,
-      contactName: json['contactName'] as String,
-      productNames: List<String>.from(json['productNames'] as List<dynamic>),
-      userId: json['userId'] as String,
+      contactNumber: json['contact_number'] as String,
+      products: List<String>.from(json['products'] as List<dynamic>? ?? []),
+      userId: json['user'] as String?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
     );
   }
 
@@ -34,21 +44,22 @@ class SupplierApiModel {
     return {
       "name": name,
       "email": email,
-      "contactName": contactName,
-      "productNames": productNames,
-      "userId": userId,
+      "contact_number": contactNumber,
+      "products": products,
     };
   }
 
   // Convert API Model → Entity
   SupplierEntity toEntity() {
     return SupplierEntity(
-      id: id ?? '',
+      id: id,
       name: name,
       email: email,
-      contactName: contactName,
-      productNames: productNames,
+      contactNumber: contactNumber,
+      products: products,
       userId: userId,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 
@@ -58,9 +69,11 @@ class SupplierApiModel {
       id: entity.id,
       name: entity.name,
       email: entity.email,
-      contactName: entity.contactName,
-      productNames: entity.productNames,
+      contactNumber: entity.contactNumber,
+      products: entity.products,
       userId: entity.userId,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     );
   }
 }

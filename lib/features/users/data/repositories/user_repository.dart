@@ -8,7 +8,6 @@ import 'package:businesstrack/features/users/data/datasources/user_datasource.da
 import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
 import 'package:businesstrack/features/users/domain/entities/user_entity.dart';
 import 'package:businesstrack/features/users/domain/repositories/user_repository.dart';
-import 'package:businesstrack/features/users/presentation/state/user_state.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -85,9 +84,7 @@ class UserRepository implements IUserRespository {
   Future<Either<Failure, UserEntity>> getuserById(String userId) async {
     try {
       final model = await _datasource.getuserById(userId);
-      if (model != null) {
-        return Right(model.toEntity());
-      }
+      return Right(model.toEntity());
     } catch (e) {
       return Left(LocalDatabaseFailure(messgae: e.toString()));
     }

@@ -1,3 +1,4 @@
+import 'package:businesstrack/core/utils/responsive_helper.dart';
 import 'package:businesstrack/features/material/presentation/state/material_state.dart'
     as material_state_alias;
 import 'package:businesstrack/features/material/presentation/viewmodel/material_viewmodel.dart';
@@ -64,7 +65,12 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      padding: EdgeInsets.fromLTRB(
+                        ResponsiveHelper.getHorizontalPadding(context),
+                        0,
+                        ResponsiveHelper.getHorizontalPadding(context),
+                        24,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -82,9 +88,19 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
   }
 
   Widget _buildTopSummary() {
+    final horizontalPadding = ResponsiveHelper.getHorizontalPadding(context);
+    final verticalPadding = ResponsiveHelper.getVerticalPadding(context);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        verticalPadding,
+        horizontalPadding,
+        verticalPadding,
+      ),
+      padding: EdgeInsets.all(
+        ResponsiveHelper.getSpacing(context, mobile: 20, tablet: 24),
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -271,11 +287,20 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
           physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           itemCount: materials.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.75,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: ResponsiveHelper.getGridCrossAxisCount(
+              context,
+              mobile: 2,
+              tablet: 3,
+              desktop: 4,
+            ),
+            crossAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+            mainAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+            childAspectRatio: ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 0.75,
+              tablet: 0.85,
+            ),
           ),
           itemBuilder: (context, index) {
             final material = materials[index];

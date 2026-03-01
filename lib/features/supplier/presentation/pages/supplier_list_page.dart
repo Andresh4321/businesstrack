@@ -250,7 +250,7 @@ class _SupplierListPageState extends ConsumerState<SupplierListPage> {
                         onDelete: () {
                           _showDeleteConfirmation(
                             context,
-                            supplier.id,
+                            supplier.id ?? '',
                             viewmodel,
                           );
                         },
@@ -396,15 +396,15 @@ class _SupplierCard extends StatelessWidget {
                     _InfoRow(
                       icon: Icons.person,
                       label: 'Contact',
-                      value: supplier.contactName,
+                      value: supplier.contactNumber,
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       children: List.generate(
-                        supplier.productNames.length,
+                        supplier.products.length,
                         (index) => Chip(
-                          label: Text(supplier.productNames[index]),
+                          label: Text(supplier.products[index]),
                           backgroundColor: Colors.greenAccent.withOpacity(0.2),
                           labelStyle: const TextStyle(fontSize: 11),
                         ),
@@ -470,7 +470,7 @@ class _SupplierCard extends StatelessWidget {
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            Text(supplier.contactName, style: const TextStyle(fontSize: 14)),
+            Text(supplier.contactNumber, style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 16),
             const Text(
               'Products',
@@ -480,9 +480,9 @@ class _SupplierCard extends StatelessWidget {
             Wrap(
               spacing: 8,
               children: List.generate(
-                supplier.productNames.length,
+                supplier.products.length,
                 (index) => Chip(
-                  label: Text(supplier.productNames[index]),
+                  label: Text(supplier.products[index]),
                   backgroundColor: Colors.greenAccent.withOpacity(0.2),
                 ),
               ),

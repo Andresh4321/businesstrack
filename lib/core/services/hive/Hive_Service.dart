@@ -53,13 +53,49 @@ class HiveService {
     if (!Hive.isAdapterRegistered(HiveTableConstant.supplierTypeId)) {
       Hive.registerAdapter(SupplierHiveModelAdapter());
     }
+
+    // TODO: Register adapters for new features when models are created
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.materialTypeId)) {
+    //   Hive.registerAdapter(MaterialHiveModelAdapter());
+    // }
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.stockTypeId)) {
+    //   Hive.registerAdapter(StockHiveModelAdapter());
+    // }
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.billOfMaterialsTypeId)) {
+    //   Hive.registerAdapter(BillOfMaterialsHiveModelAdapter());
+    // }
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.recipeTypeId)) {
+    //   Hive.registerAdapter(RecipeHiveModelAdapter());
+    // }
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.productionTypeId)) {
+    //   Hive.registerAdapter(ProductionHiveModelAdapter());
+    // }
+
+    // TODO: Register adapters for report and low stock alert once .g.dart files are generated
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.reportTypeId)) {
+    //   Hive.registerAdapter(ReportModelAdapter());
+    // }
+    // if (!Hive.isAdapterRegistered(HiveTableConstant.lowStockAlertTypeId)) {
+    //   Hive.registerAdapter(LowStockItemModelAdapter());
+    // }
   }
 
   //Open all boxes
   Future<void> _openBoxes() async {
     await Hive.openBox<UserHiveModel>(HiveTableConstant.userTable);
     await Hive.openBox<AuthHiveModel>(HiveTableConstant.authTable);
+
+    // TODO: Open boxes for report and low stock alert once adapters are registered
+    // await Hive.openBox(HiveTableConstant.reportBox);
+    // await Hive.openBox(HiveTableConstant.lowStockAlertBox);
     await Hive.openBox<SupplierHiveModel>(HiveTableConstant.suppliersTable);
+
+    // TODO: Open boxes for new features when models are created
+    // await Hive.openBox(HiveTableConstant.materialsTable);
+    // await Hive.openBox(HiveTableConstant.stockTable);
+    // await Hive.openBox(HiveTableConstant.billOfMaterialsTable);
+    // await Hive.openBox(HiveTableConstant.recipesTable);
+    // await Hive.openBox(HiveTableConstant.productionTable);
   }
 
   //Create a new user
@@ -154,7 +190,7 @@ class HiveService {
   /// Get all suppliers for a specific user
   List<SupplierHiveModel> getSuppliersByUserId(String userId) {
     return _supplierBox.values
-        .where((supplier) => supplier.id.startsWith(userId))
+        .where((supplier) => supplier.id?.startsWith(userId) ?? false)
         .toList();
   }
 

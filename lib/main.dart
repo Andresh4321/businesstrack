@@ -1,4 +1,6 @@
 import 'package:businesstrack/app/myapp.dart';
+import 'package:businesstrack/core/sensors/light_sensor_wrapper.dart';
+import 'package:businesstrack/core/sensors/shake_detector_wrapper.dart';
 import 'package:businesstrack/core/services/hive/Hive_Service.dart';
 import 'package:businesstrack/core/services/storage/user_session_service.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +21,9 @@ void main() async {
         hiveServiceProvider.overrideWithValue(hive),
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
       ],
-      child: const MyApp(),
+      child: const ShakeDetectorWrapper(
+        child: LightSensorWrapper(child: MyApp()),
+      ),
     ),
   );
 }

@@ -62,7 +62,7 @@ class SupplierLocalDatasource implements ISupplierDataSource {
     final suppliers = _hiveService.getSuppliersByUserId(userId);
     final filtered = suppliers
         .where(
-          (supplier) => supplier.productNames.any(
+          (supplier) => supplier.products.any(
             (product) =>
                 product.toLowerCase().contains(productName.toLowerCase()),
           ),

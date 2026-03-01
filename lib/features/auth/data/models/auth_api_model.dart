@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:businesstrack/features/auth/domain/entities/auth_entity.dart';
 
 class AuthApiModel {

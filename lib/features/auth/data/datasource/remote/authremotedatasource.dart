@@ -3,8 +3,6 @@ import 'package:businesstrack/core/api/api_endpoints.dart';
 import 'package:businesstrack/core/services/storage/token_service.dart';
 import 'package:businesstrack/core/services/storage/user_session_service.dart';
 import 'package:businesstrack/features/auth/data/datasource/auth_datasource.dart';
-import 'package:businesstrack/features/auth/data/models/auth_hive_model.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:businesstrack/features/auth/data/models/auth_api_model.dart';
 
@@ -57,7 +55,7 @@ class Authremotedatasource implements IAuthRemoteDataSource {
   Future<AuthApiModel?> login(String email, String password) async {
     try {
       final response = await _apiClient.post(
-        ApiEndpoints.studentLogin,
+        ApiEndpoints.authLogin,
         data: {'email': email, 'password': password},
       );
       if (response.data['success'] == true) {
@@ -91,7 +89,7 @@ class Authremotedatasource implements IAuthRemoteDataSource {
   @override
   Future<AuthApiModel> register(AuthApiModel model) async {
     final response = await _apiClient.post(
-      ApiEndpoints.studentRegister,
+      ApiEndpoints.authRegister,
       data: model.toJson(),
     );
     if (response.data['success'] == true) {

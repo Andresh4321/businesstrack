@@ -1,4 +1,5 @@
 import 'package:businesstrack/core/services/storage/user_session_service.dart';
+import 'package:businesstrack/core/utils/responsive_helper.dart';
 import 'package:businesstrack/features/material/presentation/viewmodel/material_viewmodel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:businesstrack/features/material/presentation/state/material_state.dart';
@@ -193,10 +194,19 @@ class _BillOfMaterialsPageState extends ConsumerState<BillOfMaterialsPage> {
                   // Metrics Grid
                   GridView.count(
                     shrinkWrap: true,
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.3,
+                    crossAxisCount: ResponsiveHelper.getGridCrossAxisCount(
+                      context,
+                      mobile: 2,
+                      tablet: 4,
+                      desktop: 4,
+                    ),
+                    mainAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+                    crossAxisSpacing: ResponsiveHelper.getGridSpacing(context),
+                    childAspectRatio: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 1.3,
+                      tablet: 1.4,
+                    ),
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       _buildMetricCard(

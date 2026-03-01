@@ -137,35 +137,44 @@ class ApiClient {
   }
 }
 
-// Auth Interceptor to add JWT token to requests
+/// Auth Interceptor to add JWT token to requests and handle token expiration
 class _AuthInterceptor extends Interceptor {
   final _storage = const FlutterSecureStorage();
   static const String _tokenKey = 'auth_token';
 
+  /// Public endpoints that don't require authentication
+  static const List<String> _publicEndpoints = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/admin/login',
+    '/api/auth/forgot-password',
+    // Routes matching '/api/auth/reset-password/*' are also public
+  ];
+
   @override
-  void onRequest(
+  Future onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Skip auth for public endpoints
-    final publicEndpoints = [
-      ApiEndpoints.batches,
-      ApiEndpoints.categories,
-      ApiEndpoints.studentLogin,
-    ];
+    // Check if this is a public endpoint
+    final isPublicEndpoint = _isPublicEndpoint(options.path);
 
-    final isPublicGet =
-        options.method == 'GET' &&
-        publicEndpoints.any((endpoint) => options.path.startsWith(endpoint));
-
-    final isAuthEndpoint =
-        options.path == ApiEndpoints.studentLogin ||
-        options.path == ApiEndpoints.students;
-
-    if (!isPublicGet && !isAuthEndpoint) {
+    if (!isPublicEndpoint) {
+      // Add token to protected endpoints
       final token = await _storage.read(key: _tokenKey);
+      if (kDebugMode) {
+        print('🔐 [AuthInterceptor] Endpoint: ${options.path}');
+        print('🔐 [AuthInterceptor] Token exists: ${token != null}');
+        if (token != null) {
+          print('🔐 [AuthInterceptor] Token preview: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
+        }
+      }
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
+      } else {
+        if (kDebugMode) {
+          print('⚠️ [AuthInterceptor] No token found for protected endpoint!');
+        }
       }
     }
 
@@ -174,12 +183,32 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 Unauthorized - token expired
+    // Handle 401 Unauthorized - token expired or invalid
     if (err.response?.statusCode == 401) {
-      // Clear token and redirect to login
+      // Clear token from secure storage
       _storage.delete(key: _tokenKey);
-      // You can add navigation logic here or use a callback
+
+      // TODO: Navigate to login screen
+      // You can use a navigation callback or state management to redirect to login
+      if (kDebugMode) {
+        print('Token expired or invalid. Redirecting to login...');
+      }
     }
     handler.next(err);
+  }
+
+  /// Check if endpoint is public (doesn't require authentication)
+  static bool _isPublicEndpoint(String path) {
+    // Check if path matches any public endpoint exact match
+    if (_publicEndpoints.contains(path)) {
+      return true;
+    }
+
+    // Check for reset-password dynamic endpoint
+    if (path.contains('/api/auth/reset-password/')) {
+      return true;
+    }
+
+    return false;
   }
 }

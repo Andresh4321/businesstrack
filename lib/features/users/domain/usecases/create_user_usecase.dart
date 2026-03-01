@@ -17,28 +17,24 @@ class CreateuserUsecaseParams extends Equatable {
   @override
   // TODO: implement props
   List<Object?> get props => [userName];
-  }
-  final createuserUsecaseProvider = Provider<CreateuserUsecase>((ref){
-    return CreateuserUsecase(userRepository: ref.read(UserRepositoryProvider));
-  });
+}
+
+final createuserUsecaseProvider = Provider<CreateuserUsecase>((ref) {
+  return CreateuserUsecase(userRepository: ref.read(UserRepositoryProvider));
+});
 
 //Usecase
 
-class CreateuserUsecase implements UsecasewithParams<bool, CreateuserUsecaseParams>{
+class CreateuserUsecase
+    implements UsecasewithParams<bool, CreateuserUsecaseParams> {
   final IUserRespository _userRepository;
 
   CreateuserUsecase({required IUserRespository userRepository})
-  : _userRepository = userRepository;
-  
+    : _userRepository = userRepository;
+
   @override
   Future<Either<Failure, bool>> call(CreateuserUsecaseParams params) {
-
-    throw UnimplementedError();
-
-  }
-  
-  @override
-  Future<Either<Failure, bool>> createuser(CreateuserUsecaseParams params) {
     UserEntity userEntity = UserEntity(username: params.userName);
-   return _userRepository.createuser(userEntity);
-  }}
+    return _userRepository.createuser(userEntity);
+  }
+}

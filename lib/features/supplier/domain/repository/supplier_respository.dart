@@ -1,7 +1,6 @@
 import 'package:businesstrack/core/error/failures.dart';
 import 'package:businesstrack/features/supplier/domain/entities/supplier_entity.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract interface class ISupplierRepository {
   Future<Either<Failure, void>> addSupplier(

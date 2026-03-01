@@ -30,13 +30,10 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
   @override
   Future<List<SupplierEntity>> getSuppliers(String userId) async {
     try {
-      final response = await _apiClient.get(
-        ApiEndpoints.suppliers,
-        queryParameters: {'userId': userId},
-      );
+      final response = await _apiClient.get(ApiEndpoints.suppliers);
 
       final List<dynamic> data = response.data['data'] ?? response.data;
-      return (data as List)
+      return data
           .map(
             (supplier) => SupplierApiModel.fromJson(
               supplier as Map<String, dynamic>,
@@ -51,10 +48,7 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
   @override
   Future<void> deleteSupplier(String id, String userId) async {
     try {
-      await _apiClient.delete(
-        ApiEndpoints.suppliers,
-        queryParameters: {'id': id, 'userId': userId},
-      );
+      await _apiClient.delete(ApiEndpoints.supplierById(id));
     } catch (e) {
       rethrow;
     }
@@ -65,7 +59,7 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
     try {
       final model = SupplierApiModel.fromEntity(entity);
       await _apiClient.put(
-        '${ApiEndpoints.suppliers}/${entity.id}',
+        ApiEndpoints.supplierById(entity.id!),
         data: model.toJson(),
       );
     } catch (e) {
@@ -79,18 +73,10 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
     String userId,
   ) async {
     try {
-      final response = await _apiClient.get(
-        '${ApiEndpoints.suppliers}/search',
-        queryParameters: {'name': name, 'userId': userId},
-      );
-
-      final List<dynamic> data = response.data['data'] ?? response.data;
-      return (data as List)
-          .map(
-            (supplier) => SupplierApiModel.fromJson(
-              supplier as Map<String, dynamic>,
-            ).toEntity(),
-          )
+      // Backend doesn't have search endpoint, filter locally
+      final suppliers = await getSuppliers(userId);
+      return suppliers
+          .where((s) => s.name.toLowerCase().contains(name.toLowerCase()))
           .toList();
     } catch (e) {
       rethrow;
@@ -109,7 +95,7 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
       );
 
       final List<dynamic> data = response.data['data'] ?? response.data;
-      return (data as List)
+      return data
           .map(
             (supplier) => SupplierApiModel.fromJson(
               supplier as Map<String, dynamic>,

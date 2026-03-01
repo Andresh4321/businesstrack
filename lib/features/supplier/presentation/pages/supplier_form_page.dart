@@ -30,11 +30,11 @@ class _SupplierFormPageState extends ConsumerState<SupplierFormPage> {
       text: widget.supplier?.email ?? '',
     );
     _contactController = TextEditingController(
-      text: widget.supplier?.contactName ?? '',
+      text: widget.supplier?.contactNumber ?? '',
     );
 
     if (widget.supplier != null) {
-      _productControllers = widget.supplier!.productNames
+      _productControllers = widget.supplier!.products
           .map((p) => TextEditingController(text: p))
           .toList();
     } else {
@@ -72,6 +72,10 @@ class _SupplierFormPageState extends ConsumerState<SupplierFormPage> {
     }
 
     final viewmodel = ref.read(supplierViewmodelProvider.notifier);
+
+    // Set user ID in the viewmodel
+    viewmodel.setUserId(widget.userId);
+
     final productNames = _productControllers
         .where((controller) => controller.text.isNotEmpty)
         .map((controller) => controller.text)
@@ -92,17 +96,17 @@ class _SupplierFormPageState extends ConsumerState<SupplierFormPage> {
       viewmodel.addSupplier(
         name: _nameController.text,
         email: _emailController.text,
-        contactName: _contactController.text,
-        productNames: productNames,
+        contactNumber: _contactController.text,
+        products: productNames,
       );
     } else {
       // Update existing supplier
       viewmodel.updateSupplier(
-        id: widget.supplier!.id,
+        id: widget.supplier!.id!,
         name: _nameController.text,
         email: _emailController.text,
-        contactName: _contactController.text,
-        productNames: productNames,
+        contactNumber: _contactController.text,
+        products: productNames,
       );
     }
 

@@ -1,12 +1,10 @@
 import 'dart:io';
 
-import 'package:businesstrack/core/error/failures.dart';
 import 'package:businesstrack/features/users/domain/usecases/create_user_usecase.dart';
 import 'package:businesstrack/features/users/domain/usecases/get_all_user_usecase.dart';
 import 'package:businesstrack/features/users/domain/usecases/update_user_usecase.dart';
 import 'package:businesstrack/features/users/domain/usecases/upload_photo_usecase.dart';
 import 'package:businesstrack/features/users/presentation/state/user_state.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final userViewmodelProvider = NotifierProvider<UserViewmodel, userState>(() {
@@ -15,6 +13,7 @@ final userViewmodelProvider = NotifierProvider<UserViewmodel, userState>(() {
 
 class UserViewmodel extends Notifier<userState> {
   late final GetAllUserUsecase _GetAllUserUsecase;
+  // ignore: unused_field
   late final UpdateuserUsecase _UpdateuserUsecase;
   late final CreateuserUsecase _CreateuserUsecase;
   late final UploadPhotoUsecase _uploadPhotoUsecase;
@@ -30,7 +29,7 @@ class UserViewmodel extends Notifier<userState> {
 
   Future<void> getAllusers() async {
     state = state.copyWith(status: userStatus.loading);
-    final result = await _GetAllUserUsecase();
+    final result = await _GetAllUserUsecase.call();
 
     result.fold(
       (left) {
@@ -57,6 +56,38 @@ class UserViewmodel extends Notifier<userState> {
       },
       (right) {
         state = state.copyWith(status: userStatus.loaded);
+      },
+    );
+  }
+
+  Future<void> updateProfile({
+    required String userId,
+    String? fullname,
+    String? email,
+    String? phoneNumber,
+    String? profileImage,
+  }) async {
+    state = state.copyWith(status: userStatus.loading);
+
+    final result = await _UpdateuserUsecase(
+      UpdateuserUsecaseParams(
+        userId: userId,
+        fullname: fullname,
+        email: email,
+        phoneNumber: phoneNumber,
+        profileImage: profileImage,
+      ),
+    );
+
+    result.fold(
+      (left) {
+        state = state.copyWith(
+          status: userStatus.error,
+          errorMessage: left.message,
+        );
+      },
+      (right) {
+        state = state.copyWith(status: userStatus.updated);
       },
     );
   }

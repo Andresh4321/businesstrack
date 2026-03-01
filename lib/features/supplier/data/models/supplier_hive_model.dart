@@ -3,10 +3,10 @@ import 'package:hive/hive.dart';
 
 part 'supplier_hive_model.g.dart';
 
-@HiveType(typeId: 3)
+@HiveType(typeId: 3) // Matches HiveTableConstant.supplierTypeId
 class SupplierHiveModel extends HiveObject {
   @HiveField(0)
-  final String id;
+  final String? id;
 
   @HiveField(1)
   final String name;
@@ -15,21 +15,29 @@ class SupplierHiveModel extends HiveObject {
   final String email;
 
   @HiveField(3)
-  final String contactName;
+  final String contactNumber;
 
   @HiveField(4)
-  final List<String> productNames;
+  final List<String> products;
 
   @HiveField(5)
-  final String userId;
+  final String? userId;
+
+  @HiveField(6)
+  final DateTime? createdAt;
+
+  @HiveField(7)
+  final DateTime? updatedAt;
 
   SupplierHiveModel({
-    required this.id,
+    this.id,
     required this.name,
     required this.email,
-    required this.contactName,
-    required this.productNames,
-    required this.userId,
+    required this.contactNumber,
+    required this.products,
+    this.userId,
+    this.createdAt,
+    this.updatedAt,
   });
 
   /// From Entity
@@ -38,9 +46,11 @@ class SupplierHiveModel extends HiveObject {
       id: entity.id,
       name: entity.name,
       email: entity.email,
-      contactName: entity.contactName,
-      productNames: entity.productNames,
+      contactNumber: entity.contactNumber,
+      products: entity.products,
       userId: entity.userId,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     );
   }
 
@@ -50,9 +60,11 @@ class SupplierHiveModel extends HiveObject {
       id: id,
       name: name,
       email: email,
-      contactName: contactName,
-      productNames: productNames,
+      contactNumber: contactNumber,
+      products: products,
       userId: userId,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 

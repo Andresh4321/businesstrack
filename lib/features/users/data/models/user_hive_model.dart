@@ -1,4 +1,3 @@
-import 'package:businesstrack/core/constants/hive_table_constant.dart';
 import 'package:businesstrack/features/users/domain/entities/user_entity.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
@@ -16,17 +15,50 @@ class UserHiveModel extends HiveObject {
   @HiveField(2)
   final String? status;
 
-  UserHiveModel({String? userId, required this.username, String? status})
-    : userId = userId ?? const Uuid().v4(),
-      status = status ?? 'active';
+  @HiveField(3)
+  final String? fullname;
+
+  @HiveField(4)
+  final String? email;
+
+  @HiveField(5)
+  final String? phoneNumber;
+
+  @HiveField(6)
+  final String? profileImage;
+
+  UserHiveModel({
+    String? userId,
+    required this.username,
+    String? status,
+    this.fullname,
+    this.email,
+    this.phoneNumber,
+    this.profileImage,
+  })  : userId = userId ?? const Uuid().v4(),
+        status = status ?? 'active';
 
   // Convert Model to Batch Entity
   UserEntity toEntity() {
-    return UserEntity(userId: userId, username: username, status: status);
+    return UserEntity(
+      userId: userId,
+      username: username,
+      status: status,
+      fullname: fullname,
+      email: email,
+      phoneNumber: phoneNumber,
+      profileImage: profileImage,
+    );
   }
 
   factory UserHiveModel.fromEntity(UserEntity entity) {
-    return UserHiveModel(username: entity.username);
+    return UserHiveModel(
+      username: entity.username,
+      fullname: entity.fullname,
+      email: entity.email,
+      phoneNumber: entity.phoneNumber,
+      profileImage: entity.profileImage,
+    );
   }
 
   // Convert list of models to list of entities

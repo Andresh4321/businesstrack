@@ -3,40 +3,34 @@ import 'package:businesstrack/features/auth/data/datasource/auth_datasource.dart
 import 'package:businesstrack/features/auth/data/models/auth_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
 // Create provider
 final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
   final hiveService = ref.read(hiveServiceProvider);
-  return AuthLocalDatasource(
-    hiveService: hiveService,
-  );
+  return AuthLocalDatasource(hiveService: hiveService);
 });
-class AuthLocalDatasource implements IAuthDataSource{
+
+class AuthLocalDatasource implements IAuthDataSource {
   final HiveService _hiveService;
 
-   AuthLocalDatasource({
-    required HiveService hiveService,
-  }) : _hiveService = hiveService;
-
-
+  AuthLocalDatasource({required HiveService hiveService})
+    : _hiveService = hiveService;
 
   @override
-  Future<AuthHiveModel?> login(String email, String password) async{
-    try{
-    final user = await  _hiveService.loginUser(email,password);
-    return user;
-   }catch(e){
-    return null;
-   }
+  Future<AuthHiveModel?> login(String email, String password) async {
+    try {
+      final user = await _hiveService.loginUser(email, password);
+      return user;
+    } catch (e) {
+      return null;
+    }
   }
-
 
   @override
   Future<bool> updateUser(AuthHiveModel user) {
     // TODO: implement updateUser
     throw UnimplementedError();
   }
+
   @override
   Future<bool> deleteUser(String authId) {
     // TODO: implement deleteUser
@@ -56,50 +50,36 @@ class AuthLocalDatasource implements IAuthDataSource{
   }
 
   @override
-  Future<AuthHiveModel?> getUserById(String authId) {
-    // TODO: implement getUserById
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<bool> logOut() {
-     throw UnimplementedError();
-  }
-  
-  @override
   Future<bool> logout() async {
     try {
       // Assuming authId is available in some way, e.g., from a session manager
-      final String authId = 'currentAuthId'; // Replace with actual authId retrieval
-     await _hiveService.logoutUser(authId);
+      final String authId =
+          'currentAuthId'; // Replace with actual authId retrieval
+      await _hiveService.logoutUser(authId);
       return Future.value(true);
     } catch (e) {
       return Future.value(false);
     }
   }
-  
-  @override
-Future<bool> register(AuthHiveModel model) async {
-  try {
-    await _hiveService.registerUser(model);
-    return true;
-  } catch (e) {
-    print("REGISTER ERROR: $e");
-    return false;
-  }
-}
 
-  
   @override
-  Future<bool> isEmailExists(String email) {
-    try{
-      final exists= _hiveService. isEmailExists(email);
-      return Future.value(exists);
-    }catch(e){
-      return Future.value(false);
+  Future<bool> register(AuthHiveModel model) async {
+    try {
+      await _hiveService.registerUser(model);
+      return true;
+    } catch (e) {
+      print("REGISTER ERROR: $e");
+      return false;
     }
   }
 
-
-
+  @override
+  Future<bool> isEmailExists(String email) {
+    try {
+      final exists = _hiveService.isEmailExists(email);
+      return Future.value(exists);
+    } catch (e) {
+      return Future.value(false);
+    }
+  }
 }
