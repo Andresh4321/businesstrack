@@ -2,6 +2,7 @@ import 'package:businesstrack/features/dashboard/presentation/pages/dashboard_sc
     as dashboard;
 import 'package:businesstrack/features/material/presentation/pages/material_list_page.dart';
 import 'package:businesstrack/features/report/presentation/pages/report_page.dart';
+import 'package:businesstrack/features/stock/presentation/pages/stock_management_page.dart';
 import 'package:flutter/material.dart';
 
 class BottomNavigaiton extends StatefulWidget {
@@ -22,7 +23,7 @@ class _BottomNavigaitonState extends State<BottomNavigaiton> {
     _screens = [
       const dashboard.DashboardScreen(),
       const MaterialListPage(),
-      const Center(child: Text('Stock Screen')), // Placeholder
+      const StockManagementPage(),
       const ReportPage(),
     ];
   }

@@ -25,7 +25,7 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
     _fullnameController = TextEditingController();
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
-    
+
     // Initialize with current user data if available
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
@@ -60,21 +60,76 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_fullnameController.text.isEmpty && _emailController.text.isEmpty && _phoneController.text.isEmpty) {
+    if (_fullnameController.text.isEmpty &&
+        _emailController.text.isEmpty &&
+        _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in at least one field')),
       );
       return;
     }
 
+    // Show confirmation dialog before updating
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blueGrey[600]),
+              const SizedBox(width: 12),
+              const Text('Confirm Update'),
+            ],
+          ),
+          content: const Text(
+            'Are you sure you want to update your profile with these changes?',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey[600],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Only proceed if user confirmed
+    if (confirmed != true) {
+      return;
+    }
+
     // Get the viewmodel and call updateProfile
     final viewmodel = ref.read(userViewmodelProvider.notifier);
-    
+
     await viewmodel.updateProfile(
       userId: 'current_user_id', // Replace with actual user ID from auth
-      fullname: _fullnameController.text.isNotEmpty ? _fullnameController.text : null,
+      fullname: _fullnameController.text.isNotEmpty
+          ? _fullnameController.text
+          : null,
       email: _emailController.text.isNotEmpty ? _emailController.text : null,
-      phoneNumber: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+      phoneNumber: _phoneController.text.isNotEmpty
+          ? _phoneController.text
+          : null,
     );
 
     // Listen for the response
@@ -189,9 +244,9 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
                         ? _fullnameController.text
                         : 'Update Your Profile',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blueGrey[800],
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blueGrey[800],
+                    ),
                   ),
                   if (_emailController.text.isNotEmpty)
                     Padding(
@@ -292,7 +347,10 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
                         ),
                         child: Text(
                           state.errorMessage!,
-                          style: TextStyle(color: Colors.red[700], fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.red[700],
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -369,4 +427,3 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
     );
   }
 }
-

@@ -24,8 +24,10 @@ class DashboardState {
   double get totalMaterialQuantity =>
       materials.fold<double>(0, (sum, material) => sum + material.quantity);
 
-  int get lowStockAlertCount =>
-      alerts.where((alert) => !alert.isResolved).length;
+  // Calculate low stock from materials directly
+  int get lowStockAlertCount => materials
+      .where((material) => material.quantity <= material.minimumStock)
+      .length;
 
   int get productionCount =>
       productions.where((p) => p.status == 'ongoing').length;

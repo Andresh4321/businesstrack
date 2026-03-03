@@ -28,7 +28,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
       duration: const Duration(milliseconds: 300),
     );
     _animationController.forward();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuthToken();
       ref.read(materialViewModelProvider.notifier).getAllMaterials();
@@ -74,7 +74,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
             ),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -95,7 +97,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
               .toList();
 
     // Calculate statistics
-    final lowStockCount = allMaterials.where((m) => m.quantity <= m.minimumStock).length;
+    final lowStockCount = allMaterials
+        .where((m) => m.quantity <= m.minimumStock)
+        .length;
     final totalValue = allMaterials.fold<double>(
       0,
       (sum, m) => sum + (m.quantity * m.unitPrice),
@@ -103,12 +107,18 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: materialState.status == material_vm_state.MaterialStatus.loading &&
+      body:
+          materialState.status == material_vm_state.MaterialStatus.loading &&
               allMaterials.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
               slivers: [
-                _buildAppBar(context, allMaterials.length, lowStockCount, totalValue),
+                _buildAppBar(
+                  context,
+                  allMaterials.length,
+                  lowStockCount,
+                  totalValue,
+                ),
                 SliverToBoxAdapter(child: _buildSearchBar()),
                 filteredMaterials.isEmpty
                     ? SliverFillRemaining(child: _buildEmptyState())
@@ -127,7 +137,12 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     );
   }
 
-  Widget _buildAppBar(BuildContext context, int totalMaterials, int lowStockCount, double totalValue) {
+  Widget _buildAppBar(
+    BuildContext context,
+    int totalMaterials,
+    int lowStockCount,
+    double totalValue,
+  ) {
     return SliverAppBar(
       expandedHeight: 200,
       floating: false,
@@ -178,15 +193,17 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                         children: [
                           Text(
                             'Raw Materials',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: ResponsiveHelper.getResponsiveFontSize(
-                                context,
-                                mobile: 24,
-                                tablet: 28,
-                              ),
-                            ),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize:
+                                      ResponsiveHelper.getResponsiveFontSize(
+                                        context,
+                                        mobile: 24,
+                                        tablet: 28,
+                                      ),
+                                ),
                           ),
                           Text(
                             'Manage your inventory',
@@ -202,7 +219,10 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      _buildStatChip(Icons.category_rounded, '$totalMaterials Items'),
+                      _buildStatChip(
+                        Icons.category_rounded,
+                        '$totalMaterials Items',
+                      ),
                       const SizedBox(width: 12),
                       _buildStatChip(
                         Icons.warning_amber_rounded,
@@ -232,10 +252,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
       decoration: BoxDecoration(
         color: (color ?? Colors.white).withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -293,7 +310,10 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
             ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
           ),
           onChanged: (value) => setState(() {}),
         ),
@@ -328,10 +348,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
             const SizedBox(height: 24),
             const Text(
               'No Materials Yet',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Text(
@@ -349,7 +366,10 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
               icon: const Icon(Icons.add_rounded),
               label: const Text('Add First Material'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -372,33 +392,33 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     );
 
     return SliverPadding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 100),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 24),
       sliver: SliverGrid(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: gridSpacing,
           mainAxisSpacing: gridSpacing,
-          childAspectRatio: 0.88,
+          childAspectRatio: 0.75,
         ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final material = materials[index];
-            return FadeTransition(
-              opacity: _animationController,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.1),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: _animationController,
-                  curve: Curves.easeOut,
-                )),
-                child: _buildMaterialCard(material),
-              ),
-            );
-          },
-          childCount: materials.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final material = materials[index];
+          return FadeTransition(
+            opacity: _animationController,
+            child: SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
+              child: _buildMaterialCard(material),
+            ),
+          );
+        }, childCount: materials.length),
       ),
     );
   }
@@ -409,11 +429,11 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     final stockPercentage = (stock / material.minimumStock).clamp(0.0, 1.0);
     final isLowStock = stock <= material.minimumStock;
     final isCritical = stock < (material.minimumStock * 0.5);
-    
+
     Color statusColor = Colors.green;
     IconData statusIcon = Icons.check_circle_rounded;
     String statusText = 'Good Stock';
-    
+
     if (isCritical) {
       statusColor = Colors.red;
       statusIcon = Icons.error_rounded;
@@ -427,31 +447,32 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           onTap: () => _showMaterialDialog(material: material),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Header with icon and actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -459,16 +480,19 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                             statusColor.withOpacity(0.1),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.inventory_rounded,
                         color: statusColor,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -491,8 +515,8 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                
+                const SizedBox(height: 10),
+
                 // Material name
                 Text(
                   material.name,
@@ -500,12 +524,12 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 12),
-                
+                const SizedBox(height: 10),
+
                 // Stock progress bar
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +540,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                         Text(
                           'Stock Level',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
                           ),
@@ -524,27 +548,27 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                         Text(
                           '${stock.toStringAsFixed(0)}/${material.minimumStock.toStringAsFixed(0)}',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: Colors.grey[700],
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
                         value: stockPercentage,
                         backgroundColor: Colors.grey[200],
                         valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                        minHeight: 6,
+                        minHeight: 5,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Details
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -559,20 +583,20 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                         'Unit',
                         material.unit,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       _buildDetailRow(
                         Icons.attach_money_rounded,
-                        'Unit Price',
+                        'Price',
                         '\$${material.unitPrice.toStringAsFixed(2)}',
                       ),
                     ],
                   ),
                 ),
                 const Spacer(),
-                
+
                 // Footer with total value
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -580,7 +604,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                         Theme.of(context).primaryColor.withOpacity(0.05),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -588,7 +612,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                       Text(
                         'Total Value',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: Colors.grey[700],
                           fontWeight: FontWeight.w500,
                         ),
@@ -596,7 +620,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                       Text(
                         '\$${totalValue.toStringAsFixed(2)}',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).primaryColor,
                         ),
@@ -605,13 +629,14 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                   ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Action buttons
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _showMaterialDialog(material: material),
+                        onPressed: () =>
+                            _showMaterialDialog(material: material),
                         icon: const Icon(Icons.edit_rounded, size: 16),
                         label: const Text('Edit'),
                         style: OutlinedButton.styleFrom(
@@ -649,20 +674,11 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
       children: [
         Icon(icon, size: 14, color: Colors.grey[600]),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
         const Spacer(),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -684,7 +700,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
               Container(
@@ -770,7 +788,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                 if (minimumStock <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('Minimum stock must be greater than 0'),
+                      content: const Text(
+                        'Minimum stock must be greater than 0',
+                      ),
                       backgroundColor: Colors.red.shade700,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -814,7 +834,10 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: Colors.white),
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.white,
+                        ),
                         const SizedBox(width: 12),
                         Text(
                           isEdit
@@ -832,7 +855,10 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                 );
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -865,9 +891,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -890,7 +914,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
               Container(
@@ -940,7 +966,10 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
