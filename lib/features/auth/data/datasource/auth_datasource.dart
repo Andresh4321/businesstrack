@@ -16,11 +16,16 @@ abstract interface class IAuthDataSource {
 abstract interface class IAuthRemoteDataSource {
   Future<AuthApiModel> register(AuthApiModel model);
   Future<AuthApiModel?> login(String email, String password);
+  Future<AuthApiModel?> adminLogin(String email, String password);
   Future<bool> updateUser(AuthApiModel model);
   Future<bool> deleteUser(String authId);
   Future<AuthApiModel?> getCurrentUser();
+  Future<AuthApiModel?> whoAmI();
   Future<AuthApiModel?> getUserByEmail(String email);
   Future<bool> logout();
+  Future<String?> uploadPhoto(String filePath);
+  Future<bool> forgotPassword(String email);
+  Future<bool> resetPassword(String token, String newPassword);
 
   Future<bool> isEmailExists(String email);
 }

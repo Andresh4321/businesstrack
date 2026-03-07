@@ -10,20 +10,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class CreateRecipeParams extends Equatable {
   final String name;
   final String? description;
-  final List<String>? materials;
-  final List<int>? quantities;
-  final String? unit;
+  final double sellingPrice;
+  final List<IngredientEntity> ingredients;
 
   const CreateRecipeParams({
     required this.name,
     this.description,
-    this.materials,
-    this.quantities,
-    this.unit,
+    required this.sellingPrice,
+    required this.ingredients,
   });
 
   @override
-  List<Object?> get props => [name, description, materials, quantities, unit];
+  List<Object?> get props => [name, description, sellingPrice, ingredients];
 }
 
 final createRecipeUsecaseProvider = Provider<CreateRecipeUsecase>((ref) {
@@ -40,29 +38,11 @@ class CreateRecipeUsecase
 
   @override
   Future<Either<Failure, bool>> call(CreateRecipeParams params) {
-    final ingredientNames = params.materials ?? const <String>[];
-    final ingredientQuantities = params.quantities ?? const <int>[];
-
-    final ingredients = List<IngredientEntity>.generate(
-      ingredientNames.length,
-      (index) {
-        final quantity = index < ingredientQuantities.length
-            ? ingredientQuantities[index].toDouble()
-            : 0.0;
-
-        return IngredientEntity(
-          name: ingredientNames[index],
-          materialId: ingredientNames[index],
-          quantity: quantity,
-        );
-      },
-    );
-
     final entity = RecipeEntity(
       name: params.name,
       description: params.description,
-      sellingPrice: 0,
-      ingredients: ingredients,
+      sellingPrice: params.sellingPrice,
+      ingredients: params.ingredients,
     );
     return _recipeRepository.createRecipe(entity);
   }

@@ -1,6 +1,10 @@
 import 'package:businesstrack/features/production/data/repositories/production_repository_impl.dart';
 import 'package:businesstrack/features/production/domain/entities/production_entity.dart';
+import 'package:businesstrack/features/production/domain/usecases/delete_production_usecase.dart';
+import 'package:businesstrack/features/production/domain/usecases/end_production_usecase.dart';
+import 'package:businesstrack/features/production/domain/usecases/get_all_production_usecase.dart';
 import 'package:businesstrack/features/production/domain/usecases/start_production_usecase.dart';
+import 'package:businesstrack/features/production/domain/usecases/update_production_usecase.dart';
 import 'package:businesstrack/features/production/presentation/state/production_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,10 +15,18 @@ final productionViewModelProvider =
 
 class ProductionViewModel extends Notifier<ProductionState> {
   late final StartProductionUsecase _startProductionUsecase;
+  late final GetAllProductionUsecase _getAllProductionUsecase;
+  late final EndProductionUsecase _endProductionUsecase;
+  late final UpdateProductionUsecase _updateProductionUsecase;
+  late final DeleteProductionUsecase _deleteProductionUsecase;
 
   @override
   ProductionState build() {
     _startProductionUsecase = ref.read(startProductionUsecaseProvider);
+    _getAllProductionUsecase = ref.read(getAllProductionUsecaseProvider);
+    _endProductionUsecase = ref.read(endProductionUsecaseProvider);
+    _updateProductionUsecase = ref.read(updateProductionUsecaseProvider);
+    _deleteProductionUsecase = ref.read(deleteProductionUsecaseProvider);
     return const ProductionState();
   }
 
@@ -26,16 +38,13 @@ class ProductionViewModel extends Notifier<ProductionState> {
   }) async {
     state = state.copyWith(status: ProductionStatus.loading);
 
-    final production = ProductionEntity(
-      recipeId: recipeId,
-      batchQuantity: quantity.toDouble(),
-      estimatedOutput: estimatedOutput ?? quantity.toDouble(),
-      itemsUsed: [],
-      status: 'ongoing',
+    final result = await _startProductionUsecase(
+      StartProductionParams(
+        recipeId: recipeId,
+        quantity: quantity,
+        estimatedOutput: estimatedOutput,
+      ),
     );
-
-    final repository = ref.read(productionRepositoryProvider);
-    final result = await repository.startProduction(production);
 
     bool started = false;
 
@@ -66,9 +75,7 @@ class ProductionViewModel extends Notifier<ProductionState> {
   // Get All Production
   Future<void> getAllProduction() async {
     state = state.copyWith(status: ProductionStatus.loading);
-
-    final repository = ref.read(productionRepositoryProvider);
-    final result = await repository.getAllProduction();
+    final result = await _getAllProductionUsecase();
 
     result.fold(
       (failure) {
@@ -93,10 +100,11 @@ class ProductionViewModel extends Notifier<ProductionState> {
   }) async {
     state = state.copyWith(status: ProductionStatus.loading);
 
-    final repository = ref.read(productionRepositoryProvider);
-    final result = await repository.endProduction(
-      productionId,
-      actualOutput: actualOutput,
+    final result = await _endProductionUsecase(
+      EndProductionParams(
+        productionId: productionId,
+        actualOutput: actualOutput,
+      ),
     );
 
     bool ended = false;
@@ -128,9 +136,9 @@ class ProductionViewModel extends Notifier<ProductionState> {
   // Update Production
   Future<void> updateProduction(ProductionEntity production) async {
     state = state.copyWith(status: ProductionStatus.loading);
-
-    final repository = ref.read(productionRepositoryProvider);
-    final result = await repository.updateProduction(production);
+    final result = await _updateProductionUsecase(
+      UpdateProductionParams(production: production),
+    );
 
     result.fold(
       (failure) {
@@ -144,5 +152,38 @@ class ProductionViewModel extends Notifier<ProductionState> {
         getAllProduction(); // Refresh list
       },
     );
+  }
+
+  Future<bool> deleteProduction(String productionId) async {
+    state = state.copyWith(status: ProductionStatus.loading);
+
+    final result = await _deleteProductionUsecase(
+      DeleteProductionParams(productionId: productionId),
+    );
+
+    bool deleted = false;
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          status: ProductionStatus.error,
+          errorMessage: failure.message,
+        );
+      },
+      (isDeleted) {
+        deleted = isDeleted;
+        if (isDeleted) {
+          state = state.copyWith(status: ProductionStatus.loaded);
+          getAllProduction();
+        } else {
+          state = state.copyWith(
+            status: ProductionStatus.error,
+            errorMessage: 'Failed to delete batch',
+          );
+        }
+      },
+    );
+
+    return deleted;
   }
 }

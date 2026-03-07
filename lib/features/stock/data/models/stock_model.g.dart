@@ -18,11 +18,11 @@ class StockModelAdapter extends TypeAdapter<StockModel> {
     };
     return StockModel(
       stockId: fields[0] as String?,
-      materialId: (fields[1] as String?) ?? '',
-      quantity: (fields[2] as num?)?.toDouble() ?? 0.0,
-      transactionType: (fields[3] as String?) ?? 'in',
-      description: fields[4]?.toString(),
-      userId: fields[5]?.toString(),
+      materialId: fields[1] as String,
+      quantity: fields[2] as double,
+      transactionType: fields[3] as String,
+      description: fields[4] as String?,
+      userId: fields[5] as String?,
       createdAt: fields[6] as DateTime?,
       updatedAt: fields[7] as DateTime?,
     );

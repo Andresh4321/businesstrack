@@ -13,4 +13,5 @@ abstract interface class IProductionRepository {
     String productionId, {
     double? actualOutput,
   });
+  Future<Either<Failure, bool>> deleteProduction(String productionId);
 }

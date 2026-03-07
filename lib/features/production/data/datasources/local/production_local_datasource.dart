@@ -69,4 +69,14 @@ class ProductionLocalDatasource implements IProductionDataSource {
       return false;
     }
   }
+
+  @override
+  Future<bool> deleteProduction(String productionId) async {
+    try {
+      // TODO: Implement Hive service method
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

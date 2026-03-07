@@ -15,15 +15,51 @@ class MaterialRemoteDatasource implements IMaterialRemoteDataSource {
   MaterialRemoteDatasource({required ApiClient apiClient})
     : _apiClient = apiClient;
 
+  List<MaterialModel> _parseMaterialsResponse(Response response) {
+    final data = response.data;
+
+    // Supported shapes:
+    // 1) { success: true, data: [ ... ] }
+    // 2) { data: [ ... ] }
+    // 3) [ ... ]
+    final dynamic rawList;
+    if (data is List) {
+      rawList = data;
+    } else if (data is Map<String, dynamic>) {
+      final success = data['success'];
+      if (success == false) {
+        return [];
+      }
+      rawList = data['data'] ?? data['materials'] ?? [];
+    } else {
+      return [];
+    }
+
+    if (rawList is! List) {
+      return [];
+    }
+
+    return rawList
+        .whereType<Map>()
+        .map((json) => MaterialModel.fromJson(json.cast<String, dynamic>()))
+        .toList();
+  }
+
   @override
   Future<bool> addMaterial(MaterialModel material) async {
     try {
       print('📤 [MaterialRemote] Sending add material request...');
       print('📤 [MaterialRemote] Data: ${material.toJson()}');
 
+      final payload = {
+        ...material.toJson(),
+        // Ensure backend always receives a quantity value; default to 0.
+        'quantity': material.quantity,
+      };
+
       final response = await _apiClient.post(
-        ApiEndpoints.materials,
-        data: material.toJson(),
+        ApiEndpoints.materialCreate,
+        data: payload,
       );
 
       print('✅ [MaterialRemote] Response: ${response.statusCode}');
@@ -44,7 +80,7 @@ class MaterialRemoteDatasource implements IMaterialRemoteDataSource {
   Future<bool> deleteMaterial(String materialId) async {
     try {
       final response = await _apiClient.delete(
-        ApiEndpoints.materialById(materialId),
+        ApiEndpoints.materialDelete(materialId),
       );
       return response.data['success'] == true;
     } on DioException catch (e) {
@@ -56,14 +92,18 @@ class MaterialRemoteDatasource implements IMaterialRemoteDataSource {
   @override
   Future<List<MaterialModel>> getAllMaterials() async {
     try {
-      final response = await _apiClient.get(ApiEndpoints.materials);
-      if (response.data['success'] == true) {
-        final data = response.data['data'] as List;
-        return data
-            .map((json) => MaterialModel.fromJson(json as Map<String, dynamic>))
-            .toList();
+      // Some backends default to paginated results (e.g., limit=10).
+      // First try requesting a large limit; if unsupported, fall back.
+      try {
+        final response = await _apiClient.get(
+          ApiEndpoints.materials,
+          queryParameters: const {'page': 1, 'limit': 1000},
+        );
+        return _parseMaterialsResponse(response);
+      } on DioException {
+        final fallbackResponse = await _apiClient.get(ApiEndpoints.materials);
+        return _parseMaterialsResponse(fallbackResponse);
       }
-      return [];
     } on DioException catch (e) {
       print('Get all materials error: $e');
       rethrow;
@@ -99,9 +139,13 @@ class MaterialRemoteDatasource implements IMaterialRemoteDataSource {
   @override
   Future<bool> updateMaterial(MaterialModel material) async {
     try {
+      final payload = Map<String, dynamic>.from(material.toJson());
+      // Stock updates are handled via stock transactions, so avoid sending quantity here.
+      payload.remove('quantity');
+
       final response = await _apiClient.put(
-        ApiEndpoints.materialById(material.materialId!),
-        data: material.toJson(),
+        ApiEndpoints.materialUpdate(material.materialId!),
+        data: payload,
       );
       return response.data['success'] == true;
     } on DioException catch (e) {

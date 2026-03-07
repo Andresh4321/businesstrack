@@ -458,7 +458,8 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
     final runningByMaterialId = <String, double>{};
     final stockAfterByTransactionId = <String, double>{};
 
-    for (final tx in limitedTransactions) {
+    // Calculate running total from oldest to newest (reverse order)
+    for (final tx in limitedTransactions.reversed) {
       final current = runningByMaterialId[tx.materialId] ?? 0.0;
       final isAdd = tx.transactionType.toLowerCase() != 'out';
       final updated = isAdd ? current + tx.quantity : current - tx.quantity;

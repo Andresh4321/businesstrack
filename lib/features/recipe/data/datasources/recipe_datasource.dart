@@ -8,6 +8,14 @@ abstract interface class IRecipeDataSource {
   Future<bool> deleteRecipe(String recipeId);
 }
 
+abstract interface class IRecipeLocalDataSource {
+  Future<List<RecipeModel>> getAllRecipes();
+  Future<RecipeModel?> getRecipeById(String recipeId);
+  Future<bool> updateRecipe(RecipeModel recipe);
+  Future<bool> addRecipe(RecipeModel recipe);
+  Future<bool> deleteRecipe(String recipeId);
+}
+
 abstract interface class IRecipeRemoteDataSource {
   Future<List<RecipeModel>> getAllRecipes();
   Future<RecipeModel?> getRecipeById(String recipeId);

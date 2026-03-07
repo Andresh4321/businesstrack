@@ -1,6 +1,10 @@
-import 'package:businesstrack/features/material/data/repositories/material_repository_impl.dart';
+import 'package:businesstrack/features/dashboard/presentation/viewmodel/dashboard_viewmodel.dart';
 import 'package:businesstrack/features/material/domain/entities/material_entity.dart';
 import 'package:businesstrack/features/material/domain/usecases/add_material_usecase.dart';
+import 'package:businesstrack/features/material/domain/usecases/delete_material_usecase.dart';
+import 'package:businesstrack/features/material/domain/usecases/get_all_materials_usecase.dart';
+import 'package:businesstrack/features/material/domain/usecases/search_materials_usecase.dart';
+import 'package:businesstrack/features/material/domain/usecases/update_material_usecase.dart';
 import 'package:businesstrack/features/material/presentation/state/material_state.dart';
 import 'package:businesstrack/features/stock/data/repositories/stock_repository_impl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,10 +16,18 @@ final materialViewModelProvider =
 
 class MaterialViewModel extends Notifier<MaterialState> {
   late final AddMaterialUsecase _addMaterialUsecase;
+  late final GetAllMaterialsUsecase _getAllMaterialsUsecase;
+  late final UpdateMaterialUsecase _updateMaterialUsecase;
+  late final DeleteMaterialUsecase _deleteMaterialUsecase;
+  late final SearchMaterialsUsecase _searchMaterialsUsecase;
 
   @override
   MaterialState build() {
     _addMaterialUsecase = ref.read(addMaterialUsecaseProvider);
+    _getAllMaterialsUsecase = ref.read(getAllMaterialsUsecaseProvider);
+    _updateMaterialUsecase = ref.read(updateMaterialUsecaseProvider);
+    _deleteMaterialUsecase = ref.read(deleteMaterialUsecaseProvider);
+    _searchMaterialsUsecase = ref.read(searchMaterialsUsecaseProvider);
     return const MaterialState();
   }
 
@@ -26,7 +38,7 @@ class MaterialViewModel extends Notifier<MaterialState> {
     String? unit,
     double? unitPrice,
     double? minimumStock,
-    int? quantity,
+    double? quantity,
   }) async {
     state = state.copyWith(status: MaterialStatus.loading);
 
@@ -36,20 +48,22 @@ class MaterialViewModel extends Notifier<MaterialState> {
       unit: unit,
       unitPrice: unitPrice,
       minimumStock: minimumStock ?? 0,
+      quantity: quantity,
     );
 
     final result = await _addMaterialUsecase(params);
 
-    result.fold(
-      (failure) {
+    await result.fold(
+      (failure) async {
         state = state.copyWith(
           status: MaterialStatus.error,
           errorMessage: failure.message,
         );
       },
-      (isAdded) {
+      (isAdded) async {
         state = state.copyWith(status: MaterialStatus.loaded);
-        getAllMaterials(); // Refresh list after adding
+        await getAllMaterials(); // Refresh list after adding
+        ref.read(dashboardViewModelProvider.notifier).refreshDashboard();
       },
     );
   }
@@ -58,9 +72,8 @@ class MaterialViewModel extends Notifier<MaterialState> {
   Future<void> getAllMaterials() async {
     state = state.copyWith(status: MaterialStatus.loading);
     try {
-      final repository = ref.read(materialRepositoryProvider);
       final stockRepository = ref.read(stockRepositoryProvider);
-      final materialResult = await repository.getAllMaterials();
+      final materialResult = await _getAllMaterialsUsecase();
 
       final materials = materialResult.fold<List<MaterialEntity>>((failure) {
         state = state.copyWith(
@@ -163,8 +176,9 @@ class MaterialViewModel extends Notifier<MaterialState> {
       minimumStock: minimumStock ?? state.materials[index].minimumStock,
     );
 
-    final repository = ref.read(materialRepositoryProvider);
-    final result = await repository.updateMaterial(materialEntity);
+    final result = await _updateMaterialUsecase(
+      UpdateMaterialParams(material: materialEntity),
+    );
 
     result.fold(
       (failure) {
@@ -176,6 +190,7 @@ class MaterialViewModel extends Notifier<MaterialState> {
       (isUpdated) {
         if (isUpdated) {
           getAllMaterials(); // Refresh list after update
+          ref.read(dashboardViewModelProvider.notifier).refreshDashboard();
         }
       },
     );
@@ -187,8 +202,9 @@ class MaterialViewModel extends Notifier<MaterialState> {
   Future<void> deleteMaterial(String materialId) async {
     state = state.copyWith(status: MaterialStatus.loading);
 
-    final repository = ref.read(materialRepositoryProvider);
-    final result = await repository.deleteMaterial(materialId);
+    final result = await _deleteMaterialUsecase(
+      DeleteMaterialParams(materialId: materialId),
+    );
 
     result.fold(
       (failure) {
@@ -200,6 +216,7 @@ class MaterialViewModel extends Notifier<MaterialState> {
       (isDeleted) {
         if (isDeleted) {
           getAllMaterials(); // Refresh list after delete
+          ref.read(dashboardViewModelProvider.notifier).refreshDashboard();
         }
       },
     );
@@ -215,8 +232,9 @@ class MaterialViewModel extends Notifier<MaterialState> {
       return;
     }
 
-    final repository = ref.read(materialRepositoryProvider);
-    final result = await repository.searchMaterials(query);
+    final result = await _searchMaterialsUsecase(
+      SearchMaterialsParams(query: query),
+    );
 
     result.fold(
       (failure) {

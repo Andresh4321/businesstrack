@@ -34,10 +34,11 @@ class AuthApiModel {
 
   // Convert JSON → API Model
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
+    final fullNameFromApi = json['fullname'] ?? json['name'] ?? '';
     return AuthApiModel(
       id: json['_id'] as String?,
-      fullName: json['fullname'] as String? ?? json['name'] as String,
-      email: json['email'] as String,
+      fullName: fullNameFromApi.toString(),
+      email: (json['email'] ?? '') as String,
       phoneNumber:
           json['phone_number'] as String? ?? json['phoneNumber'] as String?,
       profilePicture: json['profilePicture'] as String?,

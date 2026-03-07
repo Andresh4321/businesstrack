@@ -22,32 +22,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-
-    /// Listen to Auth Changes (Safe - Not inside build)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-        if (next.status == AuthStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(next.errorMessage ?? 'Registration failed')),
-          );
-        } else if (next.status == AuthStatus.registered) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registration successful')),
-          );
-
-          // Navigate to LoginScreen (no prefilled data)
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
-        }
-      });
-    });
-  }
-
-  @override
   void dispose() {
     nameController.dispose();
     phoneController.dispose();
@@ -61,6 +35,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = ref.watch(authViewModelProvider);
+
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.errorMessage ?? 'Registration failed')),
+        );
+      } else if (next.status == AuthStatus.registered) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful')),
+        );
+
+        // Navigate to LoginScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

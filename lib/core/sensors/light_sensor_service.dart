@@ -13,9 +13,17 @@ class LightSensorService {
   Stream<LightSensorState> get stateStream => _stateController.stream;
   LightSensorState get currentState => _currentState;
 
-  // Threshold values for theme switching
-  static const double darkModeThreshold = 200.0;
-  static const double lightModeThreshold = 500.0;
+  // Hysteresis thresholds to prevent flickering
+  // Dark mode ON when light < darkModeThresholdLow
+  // Dark mode OFF when light > darkModeThresholdHigh
+  static const double darkModeThresholdLow = 150.0;
+  static const double darkModeThresholdHigh = 250.0;
+
+  // Smoothing: average readings over N samples to reduce noise
+  static const int smoothingSamples = 5;
+  final List<double> _lightLevelHistory = [];
+  DateTime? _lastStateUpdateTime;
+  static const Duration updateDebounce = Duration(milliseconds: 500);
 
   void initialize() {
     _startLightSensor();
@@ -66,18 +74,47 @@ class LightSensorService {
   }
 
   void _updateLightLevel(double lightLevel) {
-    bool shouldBeDarkMode = lightLevel < darkModeThreshold;
-    bool themeChanged = shouldBeDarkMode != _currentState.isDarkMode;
+    // Add to history for smoothing
+    _lightLevelHistory.add(lightLevel);
+    if (_lightLevelHistory.length > smoothingSamples) {
+      _lightLevelHistory.removeAt(0);
+    }
 
-    String condition = _getLightCondition(lightLevel);
+    // Calculate average light level from history
+    double averageLightLevel =
+        _lightLevelHistory.reduce((a, b) => a + b) / _lightLevelHistory.length;
+
+    // Only update state if enough time has passed (debounce)
+    DateTime now = DateTime.now();
+    bool shouldUpdate =
+        _lastStateUpdateTime == null ||
+        now.difference(_lastStateUpdateTime!) >= updateDebounce;
+
+    if (!shouldUpdate) {
+      return;
+    }
+
+    _lastStateUpdateTime = now;
+
+    // Apply hysteresis to prevent flickering
+    bool shouldBeDarkMode;
+    if (_currentState.isDarkMode) {
+      // Currently in dark mode: only switch to light if above HIGH threshold
+      shouldBeDarkMode = averageLightLevel < darkModeThresholdHigh;
+    } else {
+      // Currently in light mode: only switch to dark if below LOW threshold
+      shouldBeDarkMode = averageLightLevel < darkModeThresholdLow;
+    }
+
+    String condition = _getLightCondition(averageLightLevel);
 
     LightSensorState newState = _currentState.copyWith(
-      lightLevel: lightLevel,
+      lightLevel: averageLightLevel,
       isDarkMode: shouldBeDarkMode,
       lightCondition: condition,
     );
 
-    _updateState(newState, themeChanged: themeChanged);
+    _updateState(newState);
   }
 
   void _updateState(LightSensorState newState, {bool themeChanged = false}) {

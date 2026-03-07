@@ -1,18 +1,15 @@
+import '../../domain/entities/user_entity.dart';
 
-
-import 'dart:io';
-
-import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
-
-abstract interface class IUserDatasource {
-  Future<List<UserHiveModel>> getAllusers();
-  Future<UserHiveModel> getuserById(String batchId);
-  Future<bool> createuser(UserHiveModel entity);
-  Future<bool> updateuser(UserHiveModel entity);
-  Future<bool> deleteuser(String userId);
+abstract class IUserDataSource {
+  Future<UserEntity?> getUserProfile(String userId);
+  Future<List<AIAssistantEntity>?> getAIAssistantHistory(String userId);
+  Future<List<NotificationEntity>?> getNotifications(String userId);
 }
 
-abstract interface class IUserRemoteDatasource {
-  Future<String> uploadImage(File image);
-  Future<String> uploadVideo(File video);
+abstract class IUserRemoteDataSource {
+  Future<UserEntity> getUserProfile(String userId);
+  Future<UserEntity> updateUserProfile(UserEntity user);
+  Future<AIAssistantEntity> queryAIAssistant(String userId, String query);
+  Future<List<AIAssistantEntity>> getAIAssistantHistory(String userId);
+  Future<List<NotificationEntity>> getNotifications(String userId);
 }

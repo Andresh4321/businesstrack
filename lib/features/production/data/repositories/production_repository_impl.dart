@@ -191,4 +191,31 @@ class ProductionRepositoryImpl implements IProductionRepository {
       }
     }
   }
+
+  @override
+  Future<Either<Failure, bool>> deleteProduction(String productionId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final result = await _productionRemoteDatasource.deleteProduction(
+          productionId,
+        );
+        return Right(result);
+      } on DioException catch (e) {
+        return Left(
+          Apifailure(
+            message: _extractApiMessage(e, 'Failed to delete production'),
+          ),
+        );
+      }
+    } else {
+      try {
+        final result = await _productionLocalDatasource.deleteProduction(
+          productionId,
+        );
+        return Right(result);
+      } catch (e) {
+        return Left(LocalDatabaseFailure(messgae: e.toString()));
+      }
+    }
+  }
 }

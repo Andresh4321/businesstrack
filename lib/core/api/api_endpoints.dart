@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -92,7 +93,6 @@ class ApiEndpoints {
   static String supplierCreate = '/api/suppliers';
   static String supplierUpdate(String id) => '/api/suppliers/$id';
   static String supplierDelete(String id) => '/api/suppliers/$id';
-
   // ============ Admin User Endpoints ============
   static const String adminUsers = '/api/admin/users';
   static String adminUserById(String id) => '/api/admin/users/$id';
@@ -104,4 +104,14 @@ class ApiEndpoints {
   // ============ Static File Endpoints ============
   static const String uploadedFiles = '/uploads';
   static const String itemPhotos = '/items/photos';
+
+  // ============ Messaging Endpoints ============
+  static const String messages = '/api/messages';
+  static const String messagesCheckUser = '/api/messages/check-user';
+  static const String messagesConversation = '/api/messages/conversation';
+  static const String messagesSend = '/api/messages/send';
+  static const String messagesUnreadCount = '/api/messages/count/unread';
+  static const String messagesNotifications = '/api/messages/notifications/list';
+  static String messagesByConversationId(String conversationId) =>
+      '/api/messages/$conversationId';
 }

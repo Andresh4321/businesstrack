@@ -13,6 +13,7 @@ class AddMaterialParams extends Equatable {
   final String? unit;
   final double? unitPrice;
   final double? minimumStock;
+  final double? quantity;
 
   const AddMaterialParams({
     required this.name,
@@ -20,10 +21,18 @@ class AddMaterialParams extends Equatable {
     this.unit,
     this.unitPrice,
     this.minimumStock,
+    this.quantity,
   });
 
   @override
-  List<Object?> get props => [name, description, unit, unitPrice, minimumStock];
+  List<Object?> get props => [
+    name,
+    description,
+    unit,
+    unitPrice,
+    minimumStock,
+    quantity,
+  ];
 }
 
 final addMaterialUsecaseProvider = Provider<AddMaterialUsecase>((ref) {
@@ -44,7 +53,8 @@ class AddMaterialUsecase implements UsecasewithParams<bool, AddMaterialParams> {
       description: params.description,
       unit: params.unit ?? '',
       unitPrice: params.unitPrice ?? 0.0,
-      quantity: 0.0, // New materials start with 0 quantity
+      // If UI does not provide stock, default to 0 to match web behaviour.
+      quantity: params.quantity ?? 0.0,
       minimumStock: params.minimumStock ?? 0.0,
     );
     return _materialRepository.addMaterial(entity);

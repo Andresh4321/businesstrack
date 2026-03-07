@@ -2,9 +2,8 @@ import 'dart:io';
 
 import 'package:businesstrack/core/error/failures.dart';
 import 'package:businesstrack/core/services/connectivity/network_info.dart';
-import 'package:businesstrack/features/users/data/datasources/local/user_local_datasource.dart';
-import 'package:businesstrack/features/users/data/datasources/remote/user_remote_datasource.dart';
-import 'package:businesstrack/features/users/data/datasources/user_datasource.dart';
+import 'package:businesstrack/features/users/data/datasources/local/user_local_crud_datasource.dart';
+import 'package:businesstrack/features/users/data/datasources/remote/user_remote_crud_datasource.dart';
 import 'package:businesstrack/features/users/data/models/user_hive_model.dart';
 import 'package:businesstrack/features/users/domain/entities/user_entity.dart';
 import 'package:businesstrack/features/users/domain/repositories/user_repository.dart';

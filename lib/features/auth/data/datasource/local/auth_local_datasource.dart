@@ -27,36 +27,32 @@ class AuthLocalDatasource implements IAuthDataSource {
 
   @override
   Future<bool> updateUser(AuthHiveModel user) {
-    // TODO: implement updateUser
-    throw UnimplementedError();
+    return _hiveService.registerUser(user).then((_) => true);
   }
 
   @override
   Future<bool> deleteUser(String authId) {
-    // TODO: implement deleteUser
-    throw UnimplementedError();
+    return _hiveService.logoutUser(authId).then((_) => true);
   }
 
   @override
   Future<AuthHiveModel?> getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
+    return Future.value(_hiveService.getCurrentUser());
   }
 
   @override
   Future<AuthHiveModel?> getUserByEmail(String email) {
-    // TODO: implement getUserByEmail
-    throw UnimplementedError();
+    return Future.value(_hiveService.getUserByEmail(email));
   }
 
   @override
   Future<bool> logout() async {
     try {
-      // Assuming authId is available in some way, e.g., from a session manager
-      final String authId =
-          'currentAuthId'; // Replace with actual authId retrieval
-      await _hiveService.logoutUser(authId);
-      return Future.value(true);
+      final current = _hiveService.getCurrentUser();
+      if (current?.authId != null) {
+        await _hiveService.logoutUser(current!.authId!);
+      }
+      return true;
     } catch (e) {
       return Future.value(false);
     }

@@ -122,7 +122,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                 SliverToBoxAdapter(child: _buildSearchBar()),
                 filteredMaterials.isEmpty
                     ? SliverFillRemaining(child: _buildEmptyState())
-                    : _buildMaterialsGrid(filteredMaterials),
+                    : _buildMaterialsList(filteredMaterials),
               ],
             ),
       floatingActionButton: ScaleTransition(
@@ -381,41 +381,32 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     );
   }
 
-  Widget _buildMaterialsGrid(List<MaterialEntity> materials) {
+  Widget _buildMaterialsList(List<MaterialEntity> materials) {
     final horizontalPadding = ResponsiveHelper.getHorizontalPadding(context);
-    final gridSpacing = ResponsiveHelper.getGridSpacing(context);
-    final crossAxisCount = ResponsiveHelper.getGridCrossAxisCount(
-      context,
-      mobile: 2,
-      tablet: 3,
-      desktop: 4,
-    );
+    final itemSpacing = ResponsiveHelper.getGridSpacing(context);
 
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 24),
-      sliver: SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: gridSpacing,
-          mainAxisSpacing: gridSpacing,
-          childAspectRatio: 0.75,
-        ),
+      sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           final material = materials[index];
-          return FadeTransition(
-            opacity: _animationController,
-            child: SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(0, 0.1),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: _animationController,
-                      curve: Curves.easeOut,
+          return Padding(
+            padding: EdgeInsets.only(bottom: itemSpacing),
+            child: FadeTransition(
+              opacity: _animationController,
+              child: SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0, 0.06),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: _animationController,
+                        curve: Curves.easeOut,
+                      ),
                     ),
-                  ),
-              child: _buildMaterialCard(material),
+                child: _buildMaterialCard(material),
+              ),
             ),
           );
         }, childCount: materials.length),
@@ -426,9 +417,12 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
   Widget _buildMaterialCard(MaterialEntity material) {
     final stock = material.quantity;
     final totalValue = material.unitPrice * stock;
-    final stockPercentage = (stock / material.minimumStock).clamp(0.0, 1.0);
-    final isLowStock = stock <= material.minimumStock;
-    final isCritical = stock < (material.minimumStock * 0.5);
+    final hasThreshold = material.minimumStock > 0;
+    final stockPercentage = hasThreshold
+        ? (stock / material.minimumStock).clamp(0.0, 1.0)
+        : 1.0;
+    final isLowStock = hasThreshold && stock <= material.minimumStock;
+    final isCritical = hasThreshold && stock < (material.minimumStock * 0.5);
 
     Color statusColor = Colors.green;
     IconData statusIcon = Icons.check_circle_rounded;
@@ -546,7 +540,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                           ),
                         ),
                         Text(
-                          '${stock.toStringAsFixed(0)}/${material.minimumStock.toStringAsFixed(0)}',
+                          hasThreshold
+                              ? '${stock.toStringAsFixed(0)}/${material.minimumStock.toStringAsFixed(0)}'
+                              : stock.toStringAsFixed(0),
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.grey[700],
@@ -592,7 +588,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                     ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 12),
 
                 // Footer with total value
                 Container(

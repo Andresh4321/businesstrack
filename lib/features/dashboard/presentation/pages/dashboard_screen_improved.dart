@@ -7,10 +7,14 @@ import 'package:businesstrack/features/dashboard/presentation/widgets/profession
 import 'package:businesstrack/features/dashboard/presentation/widgets/professional_stat_card.dart';
 import 'package:businesstrack/features/low_stock_alert/presentation/pages/low_stock_alert_page.dart';
 import 'package:businesstrack/features/material/presentation/pages/material_list_page.dart';
+import 'package:businesstrack/features/messaging/presentation/pages/messaging_page.dart';
+import 'package:businesstrack/features/messaging/presentation/providers/messaging_providers.dart'
+    as messaging_providers;
 import 'package:businesstrack/features/production/presentation/pages/production_page.dart';
 import 'package:businesstrack/features/report/presentation/pages/report_page.dart';
 import 'package:businesstrack/features/stock/presentation/pages/stock_management_page.dart';
 import 'package:businesstrack/features/supplier/presentation/pages/supplier_list_page.dart';
+import 'package:businesstrack/features/users/presentation/pages/notifications_page.dart';
 import 'package:businesstrack/features/users/presentation/pages/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +31,21 @@ class DashboardScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final dashboardState = ref.watch(dashboardViewModelProvider);
     final dashboardVM = ref.read(dashboardViewModelProvider.notifier);
+
+    final unreadMessagesAsync = ref.watch(
+      messaging_providers.unreadCountProvider,
+    );
+    final notificationsAsync = ref.watch(
+      messaging_providers.notificationsProvider,
+    );
+    final unreadMessages = unreadMessagesAsync.maybeWhen(
+      data: (v) => v,
+      orElse: () => 0,
+    );
+    final notificationCount = notificationsAsync.maybeWhen(
+      data: (list) => list.fold<int>(0, (sum, n) => sum + n.messageCount),
+      orElse: () => 0,
+    );
     final horizontalPadding = ResponsiveHelper.getHorizontalPadding(context);
     final verticalPadding = ResponsiveHelper.getVerticalPadding(context);
     final spacing = ResponsiveHelper.getSpacing(
@@ -38,7 +57,12 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: _buildAppBar(context),
+      appBar: _buildAppBar(
+        context,
+        dashboardState: dashboardState,
+        unreadMessages: unreadMessages,
+        notificationCount: notificationCount,
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
@@ -125,7 +149,13 @@ class DashboardScreen extends ConsumerWidget {
                           _buildSectionTitle(context, 'Quick Actions'),
                           SizedBox(height: spacing),
 
-                          _buildQuickActions(context, dashboardState, spacing),
+                          _buildQuickActions(
+                            context,
+                            dashboardState,
+                            spacing,
+                            unreadMessages: unreadMessages,
+                            notificationCount: notificationCount,
+                          ),
                         ],
                       ),
                     ),
@@ -136,7 +166,17 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context, {
+    required DashboardState dashboardState,
+    required int unreadMessages,
+    required int notificationCount,
+  }) {
+    final hasAnyBadge =
+        dashboardState.lowStockAlertCount > 0 ||
+        unreadMessages > 0 ||
+        notificationCount > 0;
+
     return AppBar(
       title: const Text(
         'BusinessTrack',
@@ -145,9 +185,52 @@ class DashboardScreen extends ConsumerWidget {
       elevation: 0,
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: () {},
-          tooltip: 'Notifications',
+          icon: const Icon(Icons.chat_bubble_outline),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MessagingPage()),
+            );
+          },
+          tooltip: 'Messages',
+        ),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                );
+              },
+              tooltip: 'Notifications',
+            ),
+            if (hasAnyBadge)
+              Positioned(
+                right: 10,
+                top: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${(dashboardState.lowStockAlertCount > 0 ? 1 : 0) + (unreadMessages > 0 ? 1 : 0) + (notificationCount > 0 ? 1 : 0)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined),
@@ -176,7 +259,7 @@ class DashboardScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$greeting! 👋',
+          greeting,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: ResponsiveHelper.getResponsiveFontSize(
@@ -232,7 +315,7 @@ class DashboardScreen extends ConsumerWidget {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 4,
+      crossAxisCount: 3,
       crossAxisSpacing: spacing,
       mainAxisSpacing: spacing,
       childAspectRatio: 1.2,
@@ -243,6 +326,13 @@ class DashboardScreen extends ConsumerWidget {
           subtitle: 'Tracked items',
           icon: Icons.inventory_2,
           color: Colors.blue,
+        ),
+        ProfessionalStatCard(
+          title: 'Material Amount',
+          value: state.totalMaterialQuantity.toStringAsFixed(2),
+          subtitle: 'Total quantity',
+          icon: Icons.scale_outlined,
+          color: Colors.indigo,
         ),
         ProfessionalStatCard(
           title: 'Low Stock',
@@ -259,11 +349,19 @@ class DashboardScreen extends ConsumerWidget {
           color: Colors.green,
         ),
         ProfessionalStatCard(
+          title: 'Active Production',
+          value: '${state.productionCount}',
+          subtitle: 'Ongoing batches',
+          icon: Icons.factory_outlined,
+          color: Colors.purple,
+          onTap: () {},
+        ),
+        ProfessionalStatCard(
           title: 'Production Today',
           value: '${state.completedProductionToday}',
           subtitle: 'Completed',
           icon: Icons.factory,
-          color: Colors.purple,
+          color: Colors.deepPurple,
           onTap: () {},
         ),
       ],
@@ -293,11 +391,11 @@ class DashboardScreen extends ConsumerWidget {
             SizedBox(width: spacing),
             Expanded(
               child: ProfessionalStatCard(
-                title: 'Low Stock',
-                value: '${state.lowStockAlertCount}',
-                subtitle: 'Alert items',
-                icon: Icons.warning_amber,
-                color: Colors.orange,
+                title: 'Material Amount',
+                value: state.totalMaterialQuantity.toStringAsFixed(2),
+                subtitle: 'Total quantity',
+                icon: Icons.scale_outlined,
+                color: Colors.indigo,
               ),
             ),
           ],
@@ -307,11 +405,36 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: ProfessionalStatCard(
+                title: 'Low Stock',
+                value: '${state.lowStockAlertCount}',
+                subtitle: 'Alert items',
+                icon: Icons.warning_amber,
+                color: Colors.orange,
+              ),
+            ),
+            SizedBox(width: spacing),
+            Expanded(
+              child: ProfessionalStatCard(
                 title: 'Inventory Value',
                 value: '\$${state.totalInventoryValue.toStringAsFixed(2)}',
                 subtitle: 'Total worth',
                 icon: Icons.attach_money,
                 color: Colors.green,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: spacing),
+        Row(
+          children: [
+            Expanded(
+              child: ProfessionalStatCard(
+                title: 'Active Production',
+                value: '${state.productionCount}',
+                subtitle: 'Ongoing batches',
+                icon: Icons.factory_outlined,
+                color: Colors.purple,
+                onTap: () {},
               ),
             ),
             SizedBox(width: spacing),
@@ -321,7 +444,7 @@ class DashboardScreen extends ConsumerWidget {
                 value: '${state.completedProductionToday}',
                 subtitle: 'Completed',
                 icon: Icons.factory,
-                color: Colors.purple,
+                color: Colors.deepPurple,
                 onTap: () {},
               ),
             ),
@@ -334,13 +457,31 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildQuickActions(
     BuildContext context,
     DashboardState dashboardState,
-    double spacing,
-  ) {
+    double spacing, {
+    required int unreadMessages,
+    required int notificationCount,
+  }) {
     final isTablet =
         ResponsiveHelper.isTablet(context) ||
         ResponsiveHelper.isDesktop(context);
 
     final modules = [
+      _ModuleData(
+        title: 'Messages',
+        description: 'Chat with your team',
+        icon: Icons.chat_bubble_outline,
+        color: Colors.deepPurple,
+        badge: unreadMessages > 0 ? '$unreadMessages' : null,
+        page: const MessagingPage(),
+      ),
+      _ModuleData(
+        title: 'Notifications',
+        description: 'Unread message previews',
+        icon: Icons.notifications_outlined,
+        color: Colors.redAccent,
+        badge: notificationCount > 0 ? '$notificationCount' : null,
+        page: const NotificationsPage(),
+      ),
       _ModuleData(
         title: 'Stock Management',
         description: 'Add or remove stock inventory',

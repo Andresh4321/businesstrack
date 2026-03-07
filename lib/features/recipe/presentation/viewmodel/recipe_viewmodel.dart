@@ -1,6 +1,9 @@
 import 'package:businesstrack/features/recipe/data/repositories/recipe_repository_impl.dart';
 import 'package:businesstrack/features/recipe/domain/entities/recipe_entity.dart';
 import 'package:businesstrack/features/recipe/domain/usecases/create_recipe_usecase.dart';
+import 'package:businesstrack/features/recipe/domain/usecases/delete_recipe_usecase.dart';
+import 'package:businesstrack/features/recipe/domain/usecases/get_all_recipes_usecase.dart';
+import 'package:businesstrack/features/recipe/domain/usecases/update_recipe_usecase.dart';
 import 'package:businesstrack/features/recipe/presentation/state/recipe_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,10 +13,16 @@ final recipeViewModelProvider = NotifierProvider<RecipeViewModel, RecipeState>(
 
 class RecipeViewModel extends Notifier<RecipeState> {
   late final CreateRecipeUsecase _createRecipeUsecase;
+  late final GetAllRecipesUsecase _getAllRecipesUsecase;
+  late final DeleteRecipeUsecase _deleteRecipeUsecase;
+  late final UpdateRecipeUsecase _updateRecipeUsecase;
 
   @override
   RecipeState build() {
     _createRecipeUsecase = ref.read(createRecipeUsecaseProvider);
+    _getAllRecipesUsecase = ref.read(getAllRecipesUsecaseProvider);
+    _deleteRecipeUsecase = ref.read(deleteRecipeUsecaseProvider);
+    _updateRecipeUsecase = ref.read(updateRecipeUsecaseProvider);
     return const RecipeState();
   }
 
@@ -26,15 +35,14 @@ class RecipeViewModel extends Notifier<RecipeState> {
   }) async {
     state = state.copyWith(status: RecipeStatus.loading);
 
-    final recipe = RecipeEntity(
-      name: name,
-      description: description,
-      sellingPrice: sellingPrice,
-      ingredients: ingredients,
+    final result = await _createRecipeUsecase(
+      CreateRecipeParams(
+        name: name,
+        description: description,
+        sellingPrice: sellingPrice,
+        ingredients: ingredients,
+      ),
     );
-
-    final repository = ref.read(recipeRepositoryProvider);
-    final result = await repository.createRecipe(recipe);
 
     result.fold(
       (failure) {
@@ -55,9 +63,7 @@ class RecipeViewModel extends Notifier<RecipeState> {
   // Get All Recipes
   Future<void> getAllRecipes() async {
     state = state.copyWith(status: RecipeStatus.loading);
-
-    final repository = ref.read(recipeRepositoryProvider);
-    final result = await repository.getAllRecipes();
+    final result = await _getAllRecipesUsecase();
 
     result.fold(
       (failure) {
@@ -75,9 +81,9 @@ class RecipeViewModel extends Notifier<RecipeState> {
   // Delete Recipe
   Future<bool> deleteRecipe(String recipeId) async {
     state = state.copyWith(status: RecipeStatus.loading);
-
-    final repository = ref.read(recipeRepositoryProvider);
-    final result = await repository.deleteRecipe(recipeId);
+    final result = await _deleteRecipeUsecase(
+      DeleteRecipeParams(recipeId: recipeId),
+    );
 
     result.fold(
       (failure) {
@@ -98,9 +104,9 @@ class RecipeViewModel extends Notifier<RecipeState> {
   // Update Recipe
   Future<bool> updateRecipe(RecipeEntity recipe) async {
     state = state.copyWith(status: RecipeStatus.loading);
-
-    final repository = ref.read(recipeRepositoryProvider);
-    final result = await repository.updateRecipe(recipe);
+    final result = await _updateRecipeUsecase(
+      UpdateRecipeParams(recipe: recipe),
+    );
 
     result.fold(
       (failure) {

@@ -81,10 +81,11 @@ class ProductionRemoteDatasource implements IProductionRemoteDataSource {
     }
   }
 
+  @override
   Future<bool> deleteProduction(String productionId) async {
     try {
       final response = await _apiClient.delete(
-        ApiEndpoints.productionById(productionId),
+        ApiEndpoints.productionDelete(productionId),
       );
       return response.data['success'] == true;
     } on DioException catch (e) {

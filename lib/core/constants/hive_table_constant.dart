@@ -31,9 +31,15 @@ class HiveTableConstant {
   static const int productionTypeId = 9;
   static const String productionTable = 'production_table';
 
-  static const int reportTypeId = 10;
+  static const int productionItemTypeId = 10;
+  static const String productionItemTable = 'production_item_table';
+
+  static const int reportTypeId = 27;
   static const String reportBox = 'report_box';
 
-  static const int lowStockAlertTypeId = 11;
+  static const int lowStockAlertTypeId = 22;
   static const String lowStockAlertBox = 'low_stock_alert_box';
+
+  static const int dashboardMetricsTypeId = 21;
+  static const String dashboardMetricsBox = 'dashboard_metrics_box';
 }

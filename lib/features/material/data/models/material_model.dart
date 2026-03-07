@@ -99,6 +99,8 @@ class MaterialModel extends HiveObject {
       'name': name,
       'unit': unit,
       'unit_price': unitPrice,
+      // Ensure backend receives a quantity value; default to 0 when not provided in UI.
+      'quantity': quantity,
       'minimum_stock': minimumStock,
       'description': description,
     };

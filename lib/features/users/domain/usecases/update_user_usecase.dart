@@ -27,7 +27,15 @@ class UpdateuserUsecaseParams extends Equatable {
   });
 
   @override
-  List<Object?> get props => [userId, userName, status, fullname, email, phoneNumber, profileImage];
+  List<Object?> get props => [
+    userId,
+    userName,
+    status,
+    fullname,
+    email,
+    phoneNumber,
+    profileImage,
+  ];
 }
 
 //Usecase

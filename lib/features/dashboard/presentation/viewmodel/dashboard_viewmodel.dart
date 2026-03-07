@@ -22,6 +22,46 @@ class DashboardViewModel extends Notifier<DashboardState> {
     return const DashboardState();
   }
 
+  List<MaterialEntity> _applyStockTransactionsToMaterials(
+    List<MaterialEntity> materials,
+    List<StockEntity> transactions,
+  ) {
+    if (materials.isEmpty || transactions.isEmpty) {
+      return materials;
+    }
+
+    final quantityByMaterialId = <String, double>{};
+
+    for (final transaction in transactions) {
+      final currentQty = quantityByMaterialId[transaction.materialId] ?? 0.0;
+      final transactionType = transaction.transactionType.toLowerCase();
+
+      if (transactionType == 'in' ||
+          transactionType == 'add' ||
+          transactionType == 'increase') {
+        quantityByMaterialId[transaction.materialId] =
+            currentQty + transaction.quantity;
+      } else {
+        quantityByMaterialId[transaction.materialId] =
+            currentQty - transaction.quantity;
+      }
+    }
+
+    return materials.map((material) {
+      final materialId = material.materialId;
+      if (materialId == null) {
+        return material;
+      }
+
+      final calculatedQty = quantityByMaterialId[materialId];
+      if (calculatedQty == null) {
+        return material;
+      }
+
+      return material.copyWith(quantity: calculatedQty < 0 ? 0 : calculatedQty);
+    }).toList();
+  }
+
   Future<void> _loadDashboardData() async {
     state = state.copyWith(status: DashboardStatus.loading);
     try {
@@ -47,9 +87,14 @@ class DashboardViewModel extends Notifier<DashboardState> {
       final stocks = stockResult.fold<List<dynamic>>((_) => [], (data) => data);
       final alerts = alertResult.fold<List<dynamic>>((_) => [], (data) => data);
 
+      final materialsAdjusted = _applyStockTransactionsToMaterials(
+        materials.cast<MaterialEntity>(),
+        stocks.cast<StockEntity>(),
+      );
+
       state = state.copyWith(
         status: DashboardStatus.loaded,
-        materials: materials.cast<MaterialEntity>(),
+        materials: materialsAdjusted,
         productions: productions.cast<ProductionEntity>(),
         stocks: stocks.cast<StockEntity>(),
         alerts: alerts.cast<LowStockAlertEntity>(),
