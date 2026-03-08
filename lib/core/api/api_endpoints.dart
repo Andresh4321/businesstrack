@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -6,35 +5,30 @@ import 'package:flutter/foundation.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const String baseUrl = 'http://10.0.2.2:5000';
-  // Base URL - change this for production
-  // For Android Emulator use: 'http://10.0.2.2:5000'
-  // For Physical Device use your computer's IP: 'http://192.168.x.x:5000'
-  // For iOS Simulator use: 'http://localhost:5000'
+  // Set true when running on a physical phone on the same LAN as the backend.
+  static const bool isPhysicalDevice = true;
+  static const String computerIpAddress = '192.168.1.10';
 
-  // static const String baseUrl = 'http://192.168.1.27:5000/api/v1';
-
-  //  static const bool isPysicalDevice = false;
-
-  // static const String compIpAddress = "192.168.1.1";
-
-  // static String get baseURl {
-  //   if (isPysicalDevice) {
-  //     return 'http://$compIpAddress:5000/api/v1';
-  //     }
-  //    // yadi andriod
-  //    if(KisWeb){
-  //     return "http:/localhost:3000/api/v1";
-  //    }else if(Platform.isAndriod){
-  //     return 'http://10.0.2.2:3000/api/v1';
-  //    }
-  //    else if(Platform.isAndriod){
-  //     return 'http://localhost:3000/api/v1';
-  //   }else{
-  //  return 'http://localhost:3000/api/v1';
-  //   }
-
-  //
+  /// Dynamically returns the base URL based on platform and device type
+  /// - Physical Device: Uses computer's local network IP
+  /// - Android Emulator: Uses 10.0.2.2 (special alias to host machine)
+  /// - iOS Simulator: Uses localhost
+  /// - Web: Uses localhost
+  static String get baseUrl {
+    if (isPhysicalDevice) {
+      return 'http://$computerIpAddress:5000';
+    }
+    // For development environment (emulator/simulator)
+    if (kIsWeb) {
+      return 'http://localhost:5000';
+    } else if (Platform.isAndroid) {
+      return 'http://10.0.2.2:5000';
+    } else if (Platform.isIOS) {
+      return 'http://localhost:5000';
+    } else {
+      return 'http://localhost:5000';
+    }
+  }
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -111,7 +105,8 @@ class ApiEndpoints {
   static const String messagesConversation = '/api/messages/conversation';
   static const String messagesSend = '/api/messages/send';
   static const String messagesUnreadCount = '/api/messages/count/unread';
-  static const String messagesNotifications = '/api/messages/notifications/list';
+  static const String messagesNotifications =
+      '/api/messages/notifications/list';
   static String messagesByConversationId(String conversationId) =>
       '/api/messages/$conversationId';
 }

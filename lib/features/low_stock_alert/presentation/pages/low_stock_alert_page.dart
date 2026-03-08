@@ -139,126 +139,68 @@ class _LowStockAlertPageState extends ConsumerState<LowStockAlertPage> {
   ) {
     return Container(
       margin: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).primaryColor,
-                  Theme.of(context).primaryColor.withOpacity(0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).primaryColor.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  height: 56,
-                  width: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.warning_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Stock Alerts',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Real-time stock monitoring',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Metrics Grid
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: ResponsiveHelper.getGridCrossAxisCount(
-              context,
-              mobile: 2,
-              tablet: 4,
-              desktop: 4,
-            ),
-            mainAxisSpacing: ResponsiveHelper.getGridSpacing(context),
-            crossAxisSpacing: ResponsiveHelper.getGridSpacing(context),
-            childAspectRatio: ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 1.3,
-              tablet: 1.4,
-            ),
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildMetricCard(
-                context: context,
-                icon: Icons.cancel_rounded,
-                label: 'Out of Stock',
-                value: outOfStockCount.toString(),
-                color: const Color(0xFF8B0000),
-                gradientEnd: const Color(0xFFD32F2F),
-              ),
-              _buildMetricCard(
-                context: context,
-                icon: Icons.error_rounded,
-                label: 'Critical',
-                value: criticalCount.toString(),
-                color: const Color(0xFFF44336),
-                gradientEnd: const Color(0xFFE53935),
-              ),
-              _buildMetricCard(
-                context: context,
-                icon: Icons.trending_down_rounded,
-                label: 'Low Stock',
-                value: lowCount.toString(),
-                color: const Color(0xFFFF9800),
-                gradientEnd: const Color(0xFFF57C00),
-              ),
-              _buildMetricCard(
-                context: context,
-                icon: Icons.check_circle_rounded,
-                label: 'In Stock',
-                value: normalCount.toString(),
-                color: const Color(0xFF4CAF50),
-                gradientEnd: const Color(0xFF388E3C),
-              ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).primaryColor,
+              Theme.of(context).primaryColor.withOpacity(0.8),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).primaryColor.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 56,
+              width: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.warning_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Stock Alerts',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Real-time stock monitoring',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -11,21 +11,36 @@ import 'package:businesstrack/features/messaging/presentation/pages/messaging_pa
 import 'package:businesstrack/features/messaging/presentation/providers/messaging_providers.dart'
     as messaging_providers;
 import 'package:businesstrack/features/production/presentation/pages/production_page.dart';
+import 'package:businesstrack/features/users/presentation/pages/ai_assistant_page.dart';
 import 'package:businesstrack/features/report/presentation/pages/report_page.dart';
 import 'package:businesstrack/features/stock/presentation/pages/stock_management_page.dart';
 import 'package:businesstrack/features/supplier/presentation/pages/supplier_list_page.dart';
 import 'package:businesstrack/features/users/presentation/pages/notifications_page.dart';
-import 'package:businesstrack/features/users/presentation/pages/setting_screen.dart';
+import 'package:businesstrack/features/users/presentation/pages/setting_screen_professional.dart';
+import 'package:businesstrack/features/auth/presentation/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DashboardScreen extends ConsumerWidget {
-  static const String _defaultUserId = '6990a8b6c6b613e7c98648c2';
-
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Automatically refresh dashboard data when navigating back to this page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dashboardVM = ref.read(dashboardViewModelProvider.notifier);
+      dashboardVM.refreshDashboard();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -233,11 +248,23 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         IconButton(
+          icon: const Icon(Icons.auto_awesome),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AIAssistantPage()),
+            );
+          },
+          tooltip: 'AI Assistant',
+        ),
+        IconButton(
           icon: const Icon(Icons.settings_outlined),
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const SettingScreen()),
+              MaterialPageRoute(
+                builder: (context) => const SettingScreenProfessional(),
+              ),
             );
           },
           tooltip: 'Settings',
@@ -465,6 +492,11 @@ class DashboardScreen extends ConsumerWidget {
         ResponsiveHelper.isTablet(context) ||
         ResponsiveHelper.isDesktop(context);
 
+    // Get current authenticated user ID
+    final authState = ref.watch(authViewModelProvider);
+    final currentUserId =
+        authState.authEntity?.authId ?? '6990a8b6c6b613e7c98648c2';
+
     final modules = [
       _ModuleData(
         title: 'Messages',
@@ -522,7 +554,7 @@ class DashboardScreen extends ConsumerWidget {
         description: 'Manage supplier information',
         icon: Icons.people,
         color: Colors.teal,
-        page: const SupplierListPage(userId: _defaultUserId),
+        page: SupplierListPage(userId: currentUserId),
       ),
       _ModuleData(
         title: 'Bill of Materials',

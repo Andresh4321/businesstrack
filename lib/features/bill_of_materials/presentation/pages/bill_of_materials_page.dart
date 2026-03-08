@@ -204,8 +204,8 @@ class _BillOfMaterialsPageState extends ConsumerState<BillOfMaterialsPage> {
                     crossAxisSpacing: ResponsiveHelper.getGridSpacing(context),
                     childAspectRatio: ResponsiveHelper.responsiveValue(
                       context,
-                      mobile: 1.3,
-                      tablet: 1.4,
+                      mobile: 1.15,
+                      tablet: 1.35,
                     ),
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
@@ -589,44 +589,49 @@ class _BillOfMaterialsPageState extends ConsumerState<BillOfMaterialsPage> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Colors.white, size: 28),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 4),
-                Text(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Colors.white.withOpacity(0.9),
                     fontWeight: FontWeight.w500,
+                    height: 1.1,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
             ),
           ],
         ),

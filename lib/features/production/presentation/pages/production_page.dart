@@ -875,29 +875,46 @@ class _ProductionPageState extends ConsumerState<ProductionPage>
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (actualOutput.isNotEmpty) {
-                final productionId = batch.productionId;
-                if (productionId == null || productionId.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Unable to complete: invalid batch id'),
-                    ),
-                  );
-                  return;
-                }
-
-                ref
-                    .read(productionViewModelProvider.notifier)
-                    .endProduction(
-                      productionId,
-                      actualOutput: double.parse(actualOutput),
-                    );
-                Navigator.pop(context);
+            onPressed: () async {
+              final parsedOutput = double.tryParse(actualOutput);
+              if (parsedOutput == null || parsedOutput < 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Batch completed successfully')),
+                  const SnackBar(
+                    content: Text('Please enter a valid actual output'),
+                    backgroundColor: Colors.red,
+                  ),
                 );
+                return;
               }
+
+              final productionId = batch.productionId;
+              if (productionId == null || productionId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Unable to complete: invalid batch id'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              final success = await ref
+                  .read(productionViewModelProvider.notifier)
+                  .endProduction(productionId, actualOutput: parsedOutput);
+
+              if (!mounted) return;
+
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success
+                        ? 'Batch completed successfully'
+                        : 'Failed to complete batch',
+                  ),
+                  backgroundColor: success ? Colors.green : Colors.red,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             child: const Text('Complete'),

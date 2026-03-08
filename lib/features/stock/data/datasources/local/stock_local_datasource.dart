@@ -1,6 +1,7 @@
 import 'package:businesstrack/core/services/hive/Hive_Service.dart';
 import 'package:businesstrack/features/stock/data/datasources/stock_datasource.dart';
 import 'package:businesstrack/features/stock/data/models/stock_model.dart';
+import 'package:businesstrack/features/stock/data/models/stock_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final stockLocalDatasourceProvider = Provider<StockLocalDatasource>((ref) {
@@ -9,7 +10,6 @@ final stockLocalDatasourceProvider = Provider<StockLocalDatasource>((ref) {
 });
 
 class StockLocalDatasource implements IStockDataSource {
-  // ignore: unused_field
   final HiveService _hiveService;
 
   StockLocalDatasource({required HiveService hiveService})
@@ -18,7 +18,8 @@ class StockLocalDatasource implements IStockDataSource {
   @override
   Future<bool> addStock(StockModel stock) async {
     try {
-      // TODO: Implement Hive service method
+      final hiveModel = StockHiveModel.fromEntity(stock.toEntity());
+      await _hiveService.createStock(hiveModel);
       return true;
     } catch (e) {
       return false;
@@ -28,7 +29,7 @@ class StockLocalDatasource implements IStockDataSource {
   @override
   Future<bool> deleteStock(String stockId) async {
     try {
-      // TODO: Implement Hive service method
+      await _hiveService.deleteStock(stockId);
       return true;
     } catch (e) {
       return false;
@@ -38,8 +39,10 @@ class StockLocalDatasource implements IStockDataSource {
   @override
   Future<List<StockModel>> getAllStock() async {
     try {
-      // TODO: Implement Hive service method
-      return [];
+      final hiveModels = _hiveService.getAllStock();
+      return hiveModels
+          .map((hiveModel) => StockModel.fromEntity(hiveModel.toEntity()))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -48,8 +51,9 @@ class StockLocalDatasource implements IStockDataSource {
   @override
   Future<StockModel?> getStockById(String stockId) async {
     try {
-      // TODO: Implement Hive service method
-      return null;
+      final hiveModel = await _hiveService.getStockById(stockId);
+      if (hiveModel == null) return null;
+      return StockModel.fromEntity(hiveModel.toEntity());
     } catch (e) {
       return null;
     }
@@ -58,7 +62,8 @@ class StockLocalDatasource implements IStockDataSource {
   @override
   Future<bool> updateStock(StockModel stock) async {
     try {
-      // TODO: Implement Hive service method
+      final hiveModel = StockHiveModel.fromEntity(stock.toEntity());
+      await _hiveService.updateStock(hiveModel);
       return true;
     } catch (e) {
       return false;

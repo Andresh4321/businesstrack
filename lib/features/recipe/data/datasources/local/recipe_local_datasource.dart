@@ -1,6 +1,7 @@
 import 'package:businesstrack/core/services/hive/Hive_Service.dart';
 import 'package:businesstrack/features/recipe/data/datasources/recipe_datasource.dart';
 import 'package:businesstrack/features/recipe/data/models/recipe_model.dart';
+import 'package:businesstrack/features/recipe/data/models/recipe_hive_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recipeLocalDatasourceProvider = Provider<RecipeLocalDatasource>((ref) {
@@ -9,7 +10,6 @@ final recipeLocalDatasourceProvider = Provider<RecipeLocalDatasource>((ref) {
 });
 
 class RecipeLocalDatasource implements IRecipeDataSource {
-  // ignore: unused_field
   final HiveService _hiveService;
 
   RecipeLocalDatasource({required HiveService hiveService})
@@ -18,7 +18,8 @@ class RecipeLocalDatasource implements IRecipeDataSource {
   @override
   Future<bool> createRecipe(RecipeModel recipe) async {
     try {
-      // TODO: Implement Hive service method
+      final hiveModel = RecipeHiveModel.fromEntity(recipe.toEntity());
+      await _hiveService.createRecipe(hiveModel);
       return true;
     } catch (e) {
       return false;
@@ -28,7 +29,7 @@ class RecipeLocalDatasource implements IRecipeDataSource {
   @override
   Future<bool> deleteRecipe(String recipeId) async {
     try {
-      // TODO: Implement Hive service method
+      await _hiveService.deleteRecipe(recipeId);
       return true;
     } catch (e) {
       return false;
@@ -38,8 +39,10 @@ class RecipeLocalDatasource implements IRecipeDataSource {
   @override
   Future<List<RecipeModel>> getAllRecipes() async {
     try {
-      // TODO: Implement Hive service method
-      return [];
+      final hiveModels = _hiveService.getAllRecipes();
+      return hiveModels
+          .map((hiveModel) => RecipeModel.fromEntity(hiveModel.toEntity()))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -48,8 +51,9 @@ class RecipeLocalDatasource implements IRecipeDataSource {
   @override
   Future<RecipeModel?> getRecipeById(String recipeId) async {
     try {
-      // TODO: Implement Hive service method
-      return null;
+      final hiveModel = await _hiveService.getRecipeById(recipeId);
+      if (hiveModel == null) return null;
+      return RecipeModel.fromEntity(hiveModel.toEntity());
     } catch (e) {
       return null;
     }
@@ -58,7 +62,8 @@ class RecipeLocalDatasource implements IRecipeDataSource {
   @override
   Future<bool> updateRecipe(RecipeModel recipe) async {
     try {
-      // TODO: Implement Hive service method
+      final hiveModel = RecipeHiveModel.fromEntity(recipe.toEntity());
+      await _hiveService.updateRecipe(hiveModel);
       return true;
     } catch (e) {
       return false;

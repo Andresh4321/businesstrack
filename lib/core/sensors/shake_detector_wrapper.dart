@@ -1,10 +1,13 @@
 import 'package:businesstrack/app/myapp.dart';
 import 'package:businesstrack/core/sensors/shake_detector_provider.dart';
 import 'package:businesstrack/core/sensors/widgets/quick_action_dialog.dart';
+import 'package:businesstrack/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:businesstrack/features/auth/presentation/state/auth.state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Widget that listens to shake detection and shows quick action dialog
+/// Only activates after successful login
 class ShakeDetectorWrapper extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -21,23 +24,29 @@ class _ShakeDetectorWrapperState extends ConsumerState<ShakeDetectorWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to shake detector state
-    ref.listen<AsyncValue>(shakeDetectorStateProvider, (previous, next) {
-      next.whenData((shakeState) {
-        // Only show dialog if shake is detected and dialog is not already showing
-        if (shakeState.isShaking && !_isDialogShowing) {
-          final now = DateTime.now();
+    // Check if user is authenticated
+    final authState = ref.watch(authViewModelProvider);
+    final isAuthenticated = authState.status == AuthStatus.authenticated;
 
-          // Prevent showing dialog too frequently (minimum 3 seconds between dialogs)
-          if (_lastDialogShowTime == null ||
-              now.difference(_lastDialogShowTime!) >
-                  const Duration(seconds: 3)) {
-            _lastDialogShowTime = now;
-            _showQuickActionDialog();
+    // Only listen to shake detector if user is logged in
+    if (isAuthenticated) {
+      ref.listen<AsyncValue>(shakeDetectorStateProvider, (previous, next) {
+        next.whenData((shakeState) {
+          // Only show dialog if shake is detected and dialog is not already showing
+          if (shakeState.isShaking && !_isDialogShowing) {
+            final now = DateTime.now();
+
+            // Prevent showing dialog too frequently (minimum 3 seconds between dialogs)
+            if (_lastDialogShowTime == null ||
+                now.difference(_lastDialogShowTime!) >
+                    const Duration(seconds: 3)) {
+              _lastDialogShowTime = now;
+              _showQuickActionDialog();
+            }
           }
-        }
+        });
       });
-    });
+    }
 
     return widget.child;
   }

@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:businesstrack/core/sensors/light_sensor_state.dart';
 
 class LightSensorService {
-  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   Timer? _lightSimulationTimer;
   final StreamController<LightSensorState> _stateController =
       StreamController<LightSensorState>.broadcast();
@@ -16,14 +14,11 @@ class LightSensorService {
   // Hysteresis thresholds to prevent flickering
   // Dark mode ON when light < darkModeThresholdLow
   // Dark mode OFF when light > darkModeThresholdHigh
-  static const double darkModeThresholdLow = 150.0;
-  static const double darkModeThresholdHigh = 250.0;
+  static const double darkModeThresholdLow = 180.0;
+  static const double darkModeThresholdHigh = 300.0;
 
-  // Smoothing: average readings over N samples to reduce noise
-  static const int smoothingSamples = 5;
-  final List<double> _lightLevelHistory = [];
   DateTime? _lastStateUpdateTime;
-  static const Duration updateDebounce = Duration(milliseconds: 500);
+  static const Duration updateInterval = Duration(seconds: 2);
 
   void initialize() {
     _startLightSensor();
@@ -31,21 +26,14 @@ class LightSensorService {
   }
 
   void _startLightSensor() {
-    // Method 1: Use accelerometer to simulate light detection
-    _accelerometerSubscription = accelerometerEventStream().listen((
-      AccelerometerEvent event,
-    ) {
-      // Calculate simulated light level based on device movement/orientation
-      double totalAccel = event.x.abs() + event.y.abs() + event.z.abs();
-      double simulatedLight = (totalAccel * 50).clamp(0, 1000);
-
-      _updateLightLevel(simulatedLight);
-    });
-
-    // Method 2: Time-based simulation (day/night cycle)
-    _lightSimulationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    // Use time-based simulation for realistic day/night cycle
+    // Updates every 2 seconds to provide responsive theme switching
+    _lightSimulationTimer = Timer.periodic(updateInterval, (timer) {
       _simulateDayNightCycle();
     });
+
+    // Initial update
+    _simulateDayNightCycle();
   }
 
   void _simulateDayNightCycle() {
@@ -55,61 +43,53 @@ class LightSensorService {
 
     double simulatedLight;
 
-    // Simulate realistic day/night cycle
-    if (hour >= 6 && hour < 8) {
-      // Dawn: 6 AM - 8 AM (100-600 lux)
-      simulatedLight = 100 + ((hour - 6) * 2 + minute / 60) * 250;
-    } else if (hour >= 8 && hour < 18) {
-      // Day: 8 AM - 6 PM (600-1000 lux)
-      simulatedLight = 600 + (now.second * 4).toDouble();
-    } else if (hour >= 18 && hour < 20) {
-      // Dusk: 6 PM - 8 PM (600-100 lux)
-      simulatedLight = 600 - ((hour - 18) * 2 + minute / 60) * 250;
+    // Simulate realistic day/night cycle based on time of day
+    if (hour >= 6 && hour < 7) {
+      // Early Dawn: 6 AM - 7 AM (50-180 lux) - gradually brightening
+      double progress = (hour - 6) + (minute / 60.0);
+      simulatedLight = 50 + (progress * 130);
+    } else if (hour >= 7 && hour < 8) {
+      // Dawn: 7 AM - 8 AM (180-400 lux) - getting brighter
+      double progress = (hour - 7) + (minute / 60.0);
+      simulatedLight = 180 + (progress * 220);
+    } else if (hour >= 8 && hour < 17) {
+      // Day: 8 AM - 5 PM (400-800 lux) - bright daylight
+      simulatedLight = 400 + ((hour - 8) * 40) + (minute / 60.0 * 40);
+    } else if (hour >= 17 && hour < 18) {
+      // Late Afternoon: 5 PM - 6 PM (600-400 lux) - starting to dim
+      double progress = (hour - 17) + (minute / 60.0);
+      simulatedLight = 600 - (progress * 200);
+    } else if (hour >= 18 && hour < 19) {
+      // Dusk: 6 PM - 7 PM (400-180 lux) - getting darker
+      double progress = (hour - 18) + (minute / 60.0);
+      simulatedLight = 400 - (progress * 220);
+    } else if (hour >= 19 && hour < 20) {
+      // Evening: 7 PM - 8 PM (180-80 lux) - twilight
+      double progress = (hour - 19) + (minute / 60.0);
+      simulatedLight = 180 - (progress * 100);
     } else {
-      // Night: 8 PM - 6 AM (50-100 lux)
-      simulatedLight = 50 + (now.second * 0.5);
+      // Night: 8 PM - 6 AM (30-80 lux) - dark with some ambient light
+      simulatedLight = 30 + (now.second % 30);
     }
 
     _updateLightLevel(simulatedLight);
   }
 
   void _updateLightLevel(double lightLevel) {
-    // Add to history for smoothing
-    _lightLevelHistory.add(lightLevel);
-    if (_lightLevelHistory.length > smoothingSamples) {
-      _lightLevelHistory.removeAt(0);
-    }
-
-    // Calculate average light level from history
-    double averageLightLevel =
-        _lightLevelHistory.reduce((a, b) => a + b) / _lightLevelHistory.length;
-
-    // Only update state if enough time has passed (debounce)
-    DateTime now = DateTime.now();
-    bool shouldUpdate =
-        _lastStateUpdateTime == null ||
-        now.difference(_lastStateUpdateTime!) >= updateDebounce;
-
-    if (!shouldUpdate) {
-      return;
-    }
-
-    _lastStateUpdateTime = now;
-
     // Apply hysteresis to prevent flickering
     bool shouldBeDarkMode;
     if (_currentState.isDarkMode) {
       // Currently in dark mode: only switch to light if above HIGH threshold
-      shouldBeDarkMode = averageLightLevel < darkModeThresholdHigh;
+      shouldBeDarkMode = lightLevel < darkModeThresholdHigh;
     } else {
       // Currently in light mode: only switch to dark if below LOW threshold
-      shouldBeDarkMode = averageLightLevel < darkModeThresholdLow;
+      shouldBeDarkMode = lightLevel < darkModeThresholdLow;
     }
 
-    String condition = _getLightCondition(averageLightLevel);
+    String condition = _getLightCondition(lightLevel);
 
     LightSensorState newState = _currentState.copyWith(
-      lightLevel: averageLightLevel,
+      lightLevel: lightLevel,
       isDarkMode: shouldBeDarkMode,
       lightCondition: condition,
     );
@@ -117,19 +97,19 @@ class LightSensorService {
     _updateState(newState);
   }
 
-  void _updateState(LightSensorState newState, {bool themeChanged = false}) {
+  void _updateState(LightSensorState newState) {
     _currentState = newState;
     _stateController.add(newState);
   }
 
   String _getLightCondition(double lightLevel) {
-    if (lightLevel < 100) {
+    if (lightLevel < 80) {
       return 'Very Dark';
-    } else if (lightLevel < 200) {
+    } else if (lightLevel < 180) {
       return 'Dark';
-    } else if (lightLevel < 500) {
+    } else if (lightLevel < 350) {
       return 'Dim';
-    } else if (lightLevel < 800) {
+    } else if (lightLevel < 600) {
       return 'Normal';
     } else {
       return 'Bright';
@@ -137,7 +117,6 @@ class LightSensorService {
   }
 
   void dispose() {
-    _accelerometerSubscription?.cancel();
     _lightSimulationTimer?.cancel();
     _stateController.close();
   }

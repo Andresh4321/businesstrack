@@ -1,6 +1,6 @@
 import 'package:businesstrack/features/supplier/domain/entities/supplier_entity.dart';
 import 'package:businesstrack/features/supplier/data/datasource/remote/supplieremotedatasource.dart';
-import 'package:businesstrack/core/User_provider.dart';
+import 'package:businesstrack/features/auth/presentation/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -68,6 +68,10 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
       ),
       RegExp(r'suppliers who supply\s*(.*?)(\?|$)', caseSensitive: false),
       RegExp(r'suppliers for\s*(.*?)(\?|$)', caseSensitive: false),
+      // Add more flexible patterns
+      RegExp(r'search for\s*(.*?)(\?|$)', caseSensitive: false),
+      RegExp(r'looking for\s*(.*?)(\?|$)', caseSensitive: false),
+      RegExp(r'need\s*(.*?)(\?|$)', caseSensitive: false),
     ];
 
     for (final pattern in patterns) {
@@ -78,13 +82,34 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
         // Remove leading/trailing punctuation
         productsStr = productsStr.replaceAll(RegExp(r'^[.\s]+|[.\s]+$'), '');
 
-        return productsStr
-            .split(RegExp(r',\s*|\s+and\s+|\s+or\s+', caseSensitive: false))
-            .map((p) => p.trim().toLowerCase())
-            .map((p) => p.replaceAll(RegExp(r'^[.\s]+|[.\s]+$'), ''))
-            .where((p) => p.isNotEmpty)
-            .toList();
+        if (productsStr.isNotEmpty) {
+          return productsStr
+              .split(RegExp(r',\s*|\s+and\s+|\s+or\s+', caseSensitive: false))
+              .map((p) => p.trim().toLowerCase())
+              .map((p) => p.replaceAll(RegExp(r'^[.\s]+|[.\s]+$'), ''))
+              .where((p) => p.isNotEmpty)
+              .toList();
+        }
       }
+    }
+
+    // Fallback: if no pattern matches, treat the entire message as a product search
+    // This handles simple queries like "eggs" or "milk"
+    final cleanedMessage = userMessage
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[?!.]'), '')
+        .trim();
+
+    if (cleanedMessage.isNotEmpty &&
+        !cleanedMessage.contains('hello') &&
+        !cleanedMessage.contains('hi') &&
+        !cleanedMessage.contains('help') &&
+        !cleanedMessage.contains('what can you do')) {
+      print(
+        'Using fallback: treating entire message as product search: $cleanedMessage',
+      );
+      return [cleanedMessage];
     }
 
     return [];
@@ -95,20 +120,31 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
   ) async {
     try {
       final supplierDataSource = ref.read(supplierRemoteDatasourceProvider);
-      final userState = ref.read(userProvider);
-      final userId = userState?.id ?? '';
 
+      // Get current user ID from auth state
+      final authState = ref.read(authViewModelProvider);
+      final userId = authState.authEntity?.authId ?? '';
+
+      if (userId.isEmpty) {
+        print('Warning: No user ID found in auth state');
+        throw Exception('User not authenticated. Please log in again.');
+      }
+
+      print('Searching for products: $products with userId: $userId');
       final Map<String, SupplierEntity> allSuppliersMap = {};
 
       for (final product in products) {
         try {
+          print('Searching for product: $product');
           final suppliers = await supplierDataSource.searchSuppliersByProduct(
             product,
             userId,
           );
+          print('Found ${suppliers.length} suppliers for $product');
           for (final supplier in suppliers) {
             if (supplier.id != null) {
               allSuppliersMap[supplier.id!] = supplier;
+              print('Added supplier: ${supplier.name}');
             }
           }
         } catch (e) {
@@ -116,6 +152,7 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
         }
       }
 
+      print('Total unique suppliers found: ${allSuppliersMap.length}');
       return allSuppliersMap.values.toList();
     } catch (e) {
       print('Error fetching suppliers: $e');
@@ -192,12 +229,17 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
         });
       }
     } catch (e) {
+      // Check if it's an authentication error
+      final isAuthError = e.toString().contains('not authenticated');
+      final errorMessage = isAuthError
+          ? 'You need to be logged in to search for suppliers. Please log in again.'
+          : 'Sorry, I encountered an error while searching for suppliers. Please try again.';
+
       setState(() {
         _messages.add(
           Message(
             role: MessageRole.assistant,
-            content:
-                'Sorry, I encountered an error while searching for suppliers. Please try again.',
+            content: errorMessage,
             timestamp: DateTime.now(),
           ),
         );
@@ -352,10 +394,10 @@ class _AIAssistantPageState extends ConsumerState<AIAssistantPage> {
                               const SizedBox(height: 4),
                               Text(
                                 _formatTime(message.timestamp),
-                                style: theme.textTheme.caption?.copyWith(
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   color: isUser
                                       ? Colors.white.withOpacity(0.7)
-                                      : theme.textTheme.caption?.color
+                                      : theme.textTheme.bodySmall?.color
                                             ?.withOpacity(0.7),
                                   fontSize: 10,
                                 ),

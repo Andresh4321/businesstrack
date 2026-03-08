@@ -223,15 +223,33 @@ class HiveService {
     SupplierHiveModel supplier,
     String userId,
   ) async {
-    final key = '${userId}_${supplier.id}';
-    await _supplierBox.put(key, supplier);
-    return supplier;
+    final resolvedId = (supplier.id != null && supplier.id!.trim().isNotEmpty)
+        ? supplier.id!
+        : '${DateTime.now().microsecondsSinceEpoch}';
+
+    final normalizedSupplier = SupplierHiveModel(
+      id: resolvedId,
+      name: supplier.name,
+      email: supplier.email,
+      contactNumber: supplier.contactNumber,
+      products: supplier.products,
+      userId: supplier.userId ?? userId,
+      createdAt: supplier.createdAt ?? DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    final key = '${userId}_$resolvedId';
+    await _supplierBox.put(key, normalizedSupplier);
+    return normalizedSupplier;
   }
 
   /// Get all suppliers for a specific user
   List<SupplierHiveModel> getSuppliersByUserId(String userId) {
-    return _supplierBox.values
-        .where((supplier) => supplier.id?.startsWith(userId) ?? false)
+    return _supplierBox
+        .toMap()
+        .entries
+        .where((entry) => entry.key.toString().startsWith('${userId}_'))
+        .map((entry) => entry.value)
         .toList();
   }
 

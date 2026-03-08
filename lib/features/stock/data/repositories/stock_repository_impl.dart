@@ -35,129 +35,160 @@ class StockRepositoryImpl implements IStockRepository {
        _stockRemoteDatasource = stockRemoteDatasource,
        _networkInfo = networkInfo;
 
+  List<StockEntity> _sortByLatest(List<StockEntity> items) {
+    final sorted = List<StockEntity>.from(items);
+    sorted.sort((a, b) {
+      final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bTime.compareTo(aTime);
+    });
+    return sorted;
+  }
+
+  Future<void> _cacheRemoteStocksToLocal(List<StockModel> remoteStock) async {
+    for (final item in remoteStock) {
+      try {
+        await _stockLocalDatasource.addStock(item);
+      } catch (_) {
+        // Best-effort cache; ignore single-item failure.
+      }
+    }
+  }
+
   @override
   Future<Either<Failure, bool>> addStock(StockEntity stock) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final model = StockModel.fromEntity(stock);
-        final result = await _stockRemoteDatasource.addStock(model);
-        return Right(result);
-      } on DioException catch (e) {
-        return Left(Apifailure(message: e.message ?? 'Failed to add stock'));
+    try {
+      final model = StockModel.fromEntity(stock);
+
+      // Always write to Hive first so offline mode works.
+      final localResult = await _stockLocalDatasource.addStock(model);
+      if (!localResult) {
+        return Left(
+          LocalDatabaseFailure(messgae: 'Failed to save stock locally'),
+        );
       }
-    } else {
-      try {
-        final model = StockModel.fromEntity(stock);
-        final result = await _stockLocalDatasource.addStock(model);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      // Best-effort remote sync when online (non-blocking for UX).
+      if (await _networkInfo.isConnected) {
+        try {
+          await _stockRemoteDatasource.addStock(model);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> deleteStock(String stockId) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final result = await _stockRemoteDatasource.deleteStock(stockId);
-        return Right(result);
-      } on DioException catch (e) {
-        return Left(Apifailure(message: e.message ?? 'Failed to delete stock'));
+    try {
+      final localResult = await _stockLocalDatasource.deleteStock(stockId);
+      if (!localResult) {
+        return Left(
+          LocalDatabaseFailure(messgae: 'Failed to delete stock locally'),
+        );
       }
-    } else {
-      try {
-        final result = await _stockLocalDatasource.deleteStock(stockId);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _stockRemoteDatasource.deleteStock(stockId);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, List<StockEntity>>> getAllStock() async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final stock = await _stockRemoteDatasource.getAllStock();
-        return Right(StockModel.toEntityList(stock));
-      } on DioException catch (e) {
-        return Left(Apifailure(message: e.message ?? 'Failed to fetch stock'));
+    try {
+      final localStock = await _stockLocalDatasource.getAllStock();
+
+      if (localStock.isNotEmpty || !(await _networkInfo.isConnected)) {
+        return Right(_sortByLatest(StockModel.toEntityList(localStock)));
       }
-    } else {
-      try {
-        final stock = await _stockLocalDatasource.getAllStock();
-        return Right(StockModel.toEntityList(stock));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
-      }
+
+      final remoteStock = await _stockRemoteDatasource.getAllStock();
+      await _cacheRemoteStocksToLocal(remoteStock);
+      return Right(_sortByLatest(StockModel.toEntityList(remoteStock)));
+    } on DioException catch (e) {
+      return Left(Apifailure(message: e.message ?? 'Failed to fetch stock'));
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, StockEntity>> getStockById(String stockId) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final stock = await _stockRemoteDatasource.getStockById(stockId);
-        if (stock != null) {
-          return Right(stock.toEntity());
-        }
-        return Left(Apifailure(message: 'Stock not found'));
-      } on DioException catch (e) {
-        return Left(Apifailure(message: e.message ?? 'Failed to fetch stock'));
+    try {
+      final localStock = await _stockLocalDatasource.getStockById(stockId);
+      if (localStock != null) {
+        return Right(localStock.toEntity());
       }
-    } else {
-      try {
-        final stock = await _stockLocalDatasource.getStockById(stockId);
-        if (stock != null) {
-          return Right(stock.toEntity());
+
+      if (await _networkInfo.isConnected) {
+        final remoteStock = await _stockRemoteDatasource.getStockById(stockId);
+        if (remoteStock != null) {
+          try {
+            await _stockLocalDatasource.addStock(remoteStock);
+          } catch (_) {}
+          return Right(remoteStock.toEntity());
         }
-        return Left(LocalDatabaseFailure(messgae: 'Stock not found'));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
       }
+
+      return Left(LocalDatabaseFailure(messgae: 'Stock not found'));
+    } on DioException catch (e) {
+      return Left(Apifailure(message: e.message ?? 'Failed to fetch stock'));
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> updateStock(StockEntity stock) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final model = StockModel.fromEntity(stock);
-        final result = await _stockRemoteDatasource.updateStock(model);
-        return Right(result);
-      } on DioException catch (e) {
-        return Left(Apifailure(message: e.message ?? 'Failed to update stock'));
+    try {
+      final model = StockModel.fromEntity(stock);
+      final localResult = await _stockLocalDatasource.updateStock(model);
+      if (!localResult) {
+        return Left(
+          LocalDatabaseFailure(messgae: 'Failed to update stock locally'),
+        );
       }
-    } else {
-      try {
-        final model = StockModel.fromEntity(stock);
-        final result = await _stockLocalDatasource.updateStock(model);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _stockRemoteDatasource.updateStock(model);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, List<StockEntity>>> getAllStockTransactions() async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final stock = await _stockRemoteDatasource.getAllStock();
-        return Right(StockModel.toEntityList(stock));
-      } on DioException catch (e) {
-        return Left(
-          Apifailure(message: e.message ?? 'Failed to fetch transactions'),
-        );
+    try {
+      final localStock = await _stockLocalDatasource.getAllStock();
+
+      if (localStock.isNotEmpty || !(await _networkInfo.isConnected)) {
+        return Right(_sortByLatest(StockModel.toEntityList(localStock)));
       }
-    } else {
-      try {
-        final stock = await _stockLocalDatasource.getAllStock();
-        return Right(StockModel.toEntityList(stock));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
-      }
+
+      final remoteStock = await _stockRemoteDatasource.getAllStock();
+      await _cacheRemoteStocksToLocal(remoteStock);
+      return Right(_sortByLatest(StockModel.toEntityList(remoteStock)));
+    } on DioException catch (e) {
+      return Left(
+        Apifailure(message: e.message ?? 'Failed to fetch transactions'),
+      );
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -168,22 +199,39 @@ class StockRepositoryImpl implements IStockRepository {
     required String transactionType,
     String? description,
   }) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final result = await _stockRemoteDatasource.createStockTransaction(
-          materialId: materialId,
-          quantity: quantity,
-          transactionType: transactionType,
-          description: description,
-        );
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final model = StockModel(
+        materialId: materialId,
+        quantity: quantity,
+        transactionType: transactionType,
+        description: description,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Always store transaction in Hive first.
+      final localResult = await _stockLocalDatasource.addStock(model);
+      if (!localResult) {
         return Left(
-          Apifailure(message: e.message ?? 'Failed to create transaction'),
+          LocalDatabaseFailure(messgae: 'Failed to save transaction locally'),
         );
       }
-    } else {
-      return Left(Apifailure(message: 'No internet connection'));
+
+      // Best-effort remote sync if online.
+      if (await _networkInfo.isConnected) {
+        try {
+          await _stockRemoteDatasource.createStockTransaction(
+            materialId: materialId,
+            quantity: quantity,
+            transactionType: transactionType,
+            description: description,
+          );
+        } catch (_) {}
+      }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -191,17 +239,25 @@ class StockRepositoryImpl implements IStockRepository {
   Future<Either<Failure, bool>> deleteStockTransaction(
     String transactionId,
   ) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final result = await _stockRemoteDatasource.deleteStock(transactionId);
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final localResult = await _stockLocalDatasource.deleteStock(
+        transactionId,
+      );
+      if (!localResult) {
         return Left(
-          Apifailure(message: e.message ?? 'Failed to delete transaction'),
+          LocalDatabaseFailure(messgae: 'Failed to delete transaction locally'),
         );
       }
-    } else {
-      return Left(Apifailure(message: 'No internet connection'));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _stockRemoteDatasource.deleteStock(transactionId);
+        } catch (_) {}
+      }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 }

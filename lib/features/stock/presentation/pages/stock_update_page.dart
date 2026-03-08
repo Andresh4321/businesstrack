@@ -2,6 +2,7 @@ import 'package:businesstrack/features/material/presentation/viewmodel/material_
 import 'package:businesstrack/features/stock/presentation/state/stock_state.dart'
     as stock_vm_state;
 import 'package:businesstrack/features/stock/presentation/viewmodel/stock_viewmodel.dart';
+import 'package:businesstrack/features/stock/presentation/widgets/stock_auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,232 +106,239 @@ class _StockUpdatePageState extends ConsumerState<StockUpdatePage> {
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Stock Management'), elevation: 0),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
+    return StockAuthGate(
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Stock Management'), elevation: 0),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.inventory,
+                          color: Theme.of(context).primaryColor,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.inventory,
-                        color: Theme.of(context).primaryColor,
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Stock Adjustments',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            '${stockState.stock.length}',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Material Selection
+                Text(
+                  'Select Material',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String?>(
+                  value: selectedMaterialId,
+                  hint: const Text('Select a material'),
+                  items: materials
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m.materialId,
+                          child: Text(m.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedMaterialId = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Quantity Input
+                Text(
+                  'Quantity',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: quantityController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Enter quantity',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Remarks
+                Text(
+                  'Remarks (Optional)',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: remarksController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Add notes...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            stockState.status ==
+                                stock_vm_state.StockStatus.loading
+                            ? null
+                            : () => _handleStockTransaction('in'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Stock'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Stock Adjustments',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            stockState.status ==
+                                stock_vm_state.StockStatus.loading
+                            ? null
+                            : () => _handleStockTransaction('out'),
+                        icon: const Icon(Icons.remove),
+                        label: const Text('Remove Stock'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        Text(
-                          '${stockState.stock.length}',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Material Selection
-              Text(
-                'Select Material',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String?>(
-                value: selectedMaterialId,
-                hint: const Text('Select a material'),
-                items: materials
-                    .map(
-                      (m) => DropdownMenuItem(
-                        value: m.materialId,
-                        child: Text(m.name),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedMaterialId = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
+                // Recent Transactions
+                Text(
+                  'Recent Adjustments',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Quantity Input
-              Text('Quantity', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              TextField(
-                controller: quantityController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Enter quantity',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Remarks
-              Text(
-                'Remarks (Optional)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: remarksController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Add notes...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          stockState.status ==
-                              stock_vm_state.StockStatus.loading
-                          ? null
-                          : () => _handleStockTransaction('in'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Stock'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
+                const SizedBox(height: 12),
+                if (stockState.stock.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'No adjustments yet',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          stockState.status ==
-                              stock_vm_state.StockStatus.loading
-                          ? null
-                          : () => _handleStockTransaction('out'),
-                      icon: const Icon(Icons.remove),
-                      label: const Text('Remove Stock'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: stockState.stock.length > 5
+                        ? 5
+                        : stockState.stock.length,
+                    itemBuilder: (context, index) {
+                      final transaction = stockState.stock[index];
+                      final isIncoming = transaction.transactionType == 'in';
 
-              // Recent Transactions
-              Text(
-                'Recent Adjustments',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              if (stockState.stock.isEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 32),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'No adjustments yet',
-                    style: TextStyle(color: Colors.grey[600]),
+                      return Card(
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isIncoming
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              isIncoming
+                                  ? Icons.arrow_downward
+                                  : Icons.arrow_upward,
+                              color: isIncoming ? Colors.green : Colors.red,
+                            ),
+                          ),
+                          title: Text(transaction.materialId),
+                          subtitle: Text(
+                            transaction.description ?? 'No remarks',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: Text(
+                            '${isIncoming ? '+' : '-'}${transaction.quantity}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isIncoming ? Colors.green : Colors.red,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: stockState.stock.length > 5
-                      ? 5
-                      : stockState.stock.length,
-                  itemBuilder: (context, index) {
-                    final transaction = stockState.stock[index];
-                    final isIncoming = transaction.transactionType == 'in';
-
-                    return Card(
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isIncoming
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            isIncoming
-                                ? Icons.arrow_downward
-                                : Icons.arrow_upward,
-                            color: isIncoming ? Colors.green : Colors.red,
-                          ),
-                        ),
-                        title: Text(transaction.materialId),
-                        subtitle: Text(
-                          transaction.description ?? 'No remarks',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text(
-                          '${isIncoming ? '+' : '-'}${transaction.quantity}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isIncoming ? Colors.green : Colors.red,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

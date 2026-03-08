@@ -106,7 +106,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     );
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF121212)
+          : Colors.grey[50],
       body:
           materialState.status == material_vm_state.MaterialStatus.loading &&
               allMaterials.isEmpty
@@ -274,12 +276,16 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
 
   Widget _buildSearchBar() {
     final horizontalPadding = ResponsiveHelper.getHorizontalPadding(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fieldBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final hintColor = isDark ? Colors.white70 : Colors.grey[500];
 
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: fieldBg,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -291,13 +297,18 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
         ),
         child: TextField(
           controller: searchController,
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+          cursorColor: Theme.of(context).colorScheme.primary,
           decoration: InputDecoration(
             hintText: 'Search materials...',
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400]),
+            hintStyle: TextStyle(color: hintColor),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             suffixIcon: searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.clear_rounded),
+                    icon: Icon(Icons.clear_rounded, color: hintColor),
                     onPressed: () {
                       searchController.clear();
                       setState(() {});
@@ -309,7 +320,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
               borderSide: BorderSide.none,
             ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: fieldBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
               vertical: 16,
@@ -440,7 +451,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF181818)
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -516,10 +529,13 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                   material.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     height: 1.2,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -569,7 +585,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF242424)
+                        : Colors.grey[50],
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
@@ -609,7 +627,9 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                         'Total Value',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey[700],
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white70
+                              : Colors.grey[700],
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -666,15 +686,26 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.grey[600]),
+        Icon(icon, size: 14, color: isDark ? Colors.white70 : Colors.grey[600]),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? Colors.white70 : Colors.grey[600],
+          ),
+        ),
         const Spacer(),
         Text(
           value,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
         ),
       ],
     );
@@ -684,7 +715,11 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     final isEdit = material != null;
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: material?.name ?? '');
-    final unitController = TextEditingController(text: material?.unit ?? '');
+    final unitOptions = <String>['kg', 'liter', 'pieces'];
+    String? selectedUnit = material?.unit;
+    if (selectedUnit != null && !unitOptions.contains(selectedUnit)) {
+      selectedUnit = null;
+    }
     final costController = TextEditingController(
       text: material != null ? material.unitPrice.toStringAsFixed(2) : '',
     );
@@ -732,11 +767,88 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                   Row(
                     children: [
                       Expanded(
-                        child: _buildField(
-                          controller: unitController,
-                          label: 'Unit',
-                          hint: 'e.g., kg',
-                          icon: Icons.straighten_rounded,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: selectedUnit,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          dropdownColor:
+                              Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF202020)
+                              : Colors.white,
+                          decoration: InputDecoration(
+                            labelText: 'Unit',
+                            hintText: 'Select unit',
+                            labelStyle: TextStyle(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white70
+                                  : Colors.grey[700],
+                              fontWeight: FontWeight.w600,
+                            ),
+                            floatingLabelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            hintStyle: TextStyle(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white54
+                                  : Colors.grey[500],
+                            ),
+                            prefixIcon: Icon(
+                              Icons.straighten_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white24
+                                    : Colors.grey[300]!,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF202020)
+                                : Colors.grey[50],
+                          ),
+                          items: unitOptions
+                              .map(
+                                (unit) => DropdownMenuItem<String>(
+                                  value: unit,
+                                  child: Text(unit),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            selectedUnit = value;
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This field is required';
+                            }
+                            return null;
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -800,7 +912,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                       .updateMaterial(
                         materialId: material.materialId!,
                         name: nameController.text.trim(),
-                        unit: unitController.text.trim(),
+                        unit: selectedUnit!,
                         unitPrice: costPerUnit,
                         minimumStock: minimumStock,
                         quantity: material.quantity.toInt(),
@@ -814,7 +926,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
                       .read(materialViewModelProvider.notifier)
                       .addMaterial(
                         name: nameController.text.trim(),
-                        unit: unitController.text.trim(),
+                        unit: selectedUnit,
                         unitPrice: costPerUnit,
                         minimumStock: minimumStock,
                         quantity: 0,
@@ -874,9 +986,14 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
     required IconData icon,
     TextInputType? keyboardType,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+      cursorColor: Theme.of(context).colorScheme.primary,
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'This field is required';
@@ -886,11 +1003,22 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon),
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white70 : Colors.grey[700],
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
+        hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.grey[500]),
+        prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white24 : Colors.grey[300]!,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -900,7 +1028,7 @@ class _MaterialListPageState extends ConsumerState<MaterialListPage>
           ),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDark ? const Color(0xFF202020) : Colors.grey[50],
       ),
     );
   }

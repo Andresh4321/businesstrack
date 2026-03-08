@@ -89,6 +89,7 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
     String userId,
   ) async {
     try {
+      // Try backend search endpoint first
       final response = await _apiClient.get(
         '${ApiEndpoints.suppliers}/search/product',
         queryParameters: {'product': productName, 'userId': userId},
@@ -103,7 +104,22 @@ class SupplierRemoteDatasource implements ISupplierRemoteDataSource {
           )
           .toList();
     } catch (e) {
-      rethrow;
+      // Fallback: fetch all suppliers and filter locally
+      print('Backend search failed, using local filter: $e');
+      try {
+        final suppliers = await getSuppliers(userId);
+        return suppliers
+            .where(
+              (s) => s.products.any(
+                (product) =>
+                    product.toLowerCase().contains(productName.toLowerCase()),
+              ),
+            )
+            .toList();
+      } catch (fallbackError) {
+        print('Fallback search also failed: $fallbackError');
+        rethrow;
+      }
     }
   }
 }

@@ -33,23 +33,35 @@ class SupplierRepository implements ISupplierRepository {
        _remoteDatasource = remoteDatasource,
        _networkInfo = networkInfo;
 
+  List<SupplierEntity> _sortByLatest(List<SupplierEntity> suppliers) {
+    final sorted = List<SupplierEntity>.from(suppliers);
+    sorted.sort((a, b) {
+      final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bTime.compareTo(aTime);
+    });
+    return sorted;
+  }
+
   @override
   Future<Either<Failure, void>> addSupplier(
     SupplierEntity entity,
     String userId,
   ) async {
     try {
-      if (await _networkInfo.isConnected) {
-        // Try remote first
-        await _remoteDatasource.addSupplier(entity, userId);
-      }
-      // Always save to local
+      // Always save locally first so offline mode always works.
       await _localDatasource.addSupplier(entity, userId);
+
+      // Best-effort remote sync if online.
+      if (await _networkInfo.isConnected) {
+        try {
+          await _remoteDatasource.addSupplier(entity, userId);
+        } catch (_) {}
+      }
+
       return const Right(null);
     } catch (e) {
-      return Left(
-        Apifailure(message: 'Failed to add supplier: ${e.toString()}'),
-      );
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -58,45 +70,43 @@ class SupplierRepository implements ISupplierRepository {
     String userId,
   ) async {
     try {
-      if (await _networkInfo.isConnected) {
-        // Fetch from remote and update local
-        final remoteSuppliers = await _remoteDatasource.getSuppliers(userId);
-        // Update local cache
-        for (var supplier in remoteSuppliers) {
-          await _localDatasource.updateSupplier(supplier, userId);
-        }
-        return Right(remoteSuppliers);
-      }
-      // Fall back to local
       final localSuppliers = await _localDatasource.getSuppliers(userId);
-      return Right(localSuppliers);
-    } catch (e) {
-      // Try local as fallback
-      try {
-        final localSuppliers = await _localDatasource.getSuppliers(userId);
-        return Right(localSuppliers);
-      } catch (_) {
-        return Left(
-          Apifailure(message: 'Failed to get suppliers: ${e.toString()}'),
-        );
+
+      if (localSuppliers.isNotEmpty || !(await _networkInfo.isConnected)) {
+        return Right(_sortByLatest(localSuppliers));
       }
+
+      final remoteSuppliers = await _remoteDatasource.getSuppliers(userId);
+      for (final supplier in remoteSuppliers) {
+        try {
+          await _localDatasource.addSupplier(supplier, userId);
+        } catch (_) {}
+      }
+
+      return Right(_sortByLatest(remoteSuppliers));
+    } catch (e) {
+      return Left(
+        Apifailure(message: 'Failed to get suppliers: ${e.toString()}'),
+      );
     }
   }
 
   @override
   Future<Either<Failure, void>> deleteSupplier(String id, String userId) async {
     try {
-      if (await _networkInfo.isConnected) {
-        // Try remote first
-        await _remoteDatasource.deleteSupplier(id, userId);
-      }
-      // Always delete from local
+      // Always delete local first.
       await _localDatasource.deleteSupplier(id, userId);
+
+      // Best-effort remote delete.
+      if (await _networkInfo.isConnected) {
+        try {
+          await _remoteDatasource.deleteSupplier(id, userId);
+        } catch (_) {}
+      }
+
       return const Right(null);
     } catch (e) {
-      return Left(
-        Apifailure(message: 'Failed to delete supplier: ${e.toString()}'),
-      );
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -106,17 +116,19 @@ class SupplierRepository implements ISupplierRepository {
     String userId,
   ) async {
     try {
-      if (await _networkInfo.isConnected) {
-        // Try remote first
-        await _remoteDatasource.updateSupplier(entity, userId);
-      }
-      // Always update local
+      // Always update local first.
       await _localDatasource.updateSupplier(entity, userId);
+
+      // Best-effort remote sync.
+      if (await _networkInfo.isConnected) {
+        try {
+          await _remoteDatasource.updateSupplier(entity, userId);
+        } catch (_) {}
+      }
+
       return const Right(null);
     } catch (e) {
-      return Left(
-        Apifailure(message: 'Failed to update supplier: ${e.toString()}'),
-      );
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 

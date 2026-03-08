@@ -54,8 +54,10 @@ class _OnboardingPageState extends State<OnboardingPage>
   @override
   void initState() {
     super.initState();
-    _animationController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _animationController.forward();
   }
 
@@ -82,7 +84,9 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   void _navigateToLogin() {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
   }
 
   @override
@@ -95,126 +99,207 @@ class _OnboardingPageState extends State<OnboardingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView.builder(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        itemCount: _pages.length,
-        itemBuilder: (context, index) {
-          final page = _pages[index];
-          return Container(
-            decoration: BoxDecoration(
-              gradient: page.bgGradient,
-            ),
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  // Optional: Semi-transparent Lottie for first page
-                  if (index == 0)
-                    Positioned(
-                      right: -50,
-                      bottom: -50,
-                      child: Opacity(
-                        opacity: 0.3,
-                        child: Lottie.asset(
-                          page.lottiePath,
-                          width: 450,
-                          height: 450,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FadeTransition(
-                        opacity: _animationController,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              page.title,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: index == 0 ? Colors.white : Colors.black,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isTablet = constraints.maxWidth >= 700;
+          final double maxContentWidth = isTablet ? 620 : 460;
+
+          return PageView.builder(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            itemCount: _pages.length,
+            itemBuilder: (context, index) {
+              final page = _pages[index];
+              final Color titleColor = index == 0 ? Colors.white : Colors.black;
+              final Color subtitleColor = index == 0
+                  ? Colors.white70
+                  : Colors.black54;
+
+              return Container(
+                decoration: BoxDecoration(gradient: page.bgGradient),
+                child: SafeArea(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxContentWidth),
+                      child: Stack(
+                        children: [
+                          if (index == 0)
+                            Positioned(
+                              right: isTablet ? -20 : -50,
+                              bottom: isTablet ? -20 : -50,
+                              child: Opacity(
+                                opacity: 0.25,
+                                child: IgnorePointer(
+                                  child: Lottie.asset(
+                                    page.lottiePath,
+                                    width: isTablet ? 420 : 320,
+                                    height: isTablet ? 420 : 320,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              page.subtitle,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: index == 0 ? Colors.white70 : Colors.black54,
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              isTablet ? 32 : 20,
+                              72,
+                              isTablet ? 32 : 20,
+                              132,
+                            ),
+                            child: FadeTransition(
+                              opacity: _animationController,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    page.title,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 40 : 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: titleColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    page.subtitle,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: isTablet ? 20 : 17,
+                                      height: 1.35,
+                                      color: subtitleColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 28),
+                                  Expanded(
+                                    child: Center(
+                                      child: AspectRatio(
+                                        aspectRatio: isTablet ? 1.25 : 1,
+                                        child: Lottie.asset(
+                                          page.lottiePath,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 32),
-                            Lottie.asset(
-                              page.lottiePath,
-                              width: 300,
-                              height: 300,
-                              fit: BoxFit.contain,
+                          ),
+                          Positioned(
+                            top: 16,
+                            right: isTablet ? 28 : 16,
+                            child: TextButton(
+                              onPressed: _skipOnboarding,
+                              style: TextButton.styleFrom(
+                                backgroundColor: index == 0
+                                    ? Colors.white30
+                                    : Colors.black12,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: Text(
+                                'Skip',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: index == 0
+                                      ? Colors.white
+                                      : Colors.black,
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Skip Button
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: TextButton(
-                      onPressed: _skipOnboarding,
-                      style: TextButton.styleFrom(
-                        backgroundColor: index == 0 ? Colors.white30 : Colors.black12,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: Text(
-                        'Skip',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: index == 0 ? Colors.white : Colors.black,
-                        ),
+                          ),
+                          Positioned(
+                            bottom: 94,
+                            left: 0,
+                            right: 0,
+                            child: _OnboardingDots(
+                              currentPage: _currentPage,
+                              totalPages: _pages.length,
+                              activeColor: index == 0
+                                  ? Colors.white
+                                  : const Color(0xFF4F46E5),
+                              inactiveColor: index == 0
+                                  ? Colors.white38
+                                  : Colors.black26,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 28,
+                            left: isTablet ? 28 : 16,
+                            right: isTablet ? 28 : 16,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _nextPage,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: page.buttonColor,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Text(
+                                  _currentPage == _pages.length - 1
+                                      ? 'Get Started'
+                                      : 'Next',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: page.buttonTextColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  // Next/Get Started Button
-                  Positioned(
-                    bottom: 40,
-                    left: 24,
-                    right: 24,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _nextPage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: page.buttonColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: page.buttonTextColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         },
       ),
+    );
+  }
+}
+
+class _OnboardingDots extends StatelessWidget {
+  const _OnboardingDots({
+    required this.currentPage,
+    required this.totalPages,
+    required this.activeColor,
+    required this.inactiveColor,
+  });
+
+  final int currentPage;
+  final int totalPages;
+  final Color activeColor;
+  final Color inactiveColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(totalPages, (index) {
+        final bool isActive = index == currentPage;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          width: isActive ? 24 : 8,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: isActive ? activeColor : inactiveColor,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
     );
   }
 }

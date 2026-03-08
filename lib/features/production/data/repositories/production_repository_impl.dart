@@ -35,6 +35,24 @@ class ProductionRepositoryImpl implements IProductionRepository {
        _productionRemoteDatasource = productionRemoteDatasource,
        _networkInfo = networkInfo;
 
+  List<ProductionEntity> _sortByLatest(List<ProductionEntity> items) {
+    final sorted = List<ProductionEntity>.from(items);
+    sorted.sort((a, b) {
+      final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bTime.compareTo(aTime);
+    });
+    return sorted;
+  }
+
+  Future<void> _cacheRemoteToLocal(List<ProductionModel> remoteItems) async {
+    for (final item in remoteItems) {
+      try {
+        await _productionLocalDatasource.startProduction(item);
+      } catch (_) {}
+    }
+  }
+
   String _extractApiMessage(DioException e, String fallback) {
     final data = e.response?.data;
     if (data is Map<String, dynamic>) {
@@ -50,26 +68,27 @@ class ProductionRepositoryImpl implements IProductionRepository {
   Future<Either<Failure, bool>> startProduction(
     ProductionEntity production,
   ) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final model = ProductionModel.fromEntity(production);
-        final result = await _productionRemoteDatasource.startProduction(model);
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final model = ProductionModel.fromEntity(production);
+
+      final localResult = await _productionLocalDatasource.startProduction(
+        model,
+      );
+      if (!localResult) {
         return Left(
-          Apifailure(
-            message: _extractApiMessage(e, 'Failed to start production'),
-          ),
+          LocalDatabaseFailure(messgae: 'Failed to save production locally'),
         );
       }
-    } else {
-      try {
-        final model = ProductionModel.fromEntity(production);
-        final result = await _productionLocalDatasource.startProduction(model);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _productionRemoteDatasource.startProduction(model);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -78,53 +97,58 @@ class ProductionRepositoryImpl implements IProductionRepository {
     String productionId, {
     double? actualOutput,
   }) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final result = await _productionRemoteDatasource.endProduction(
-          productionId,
-          actualOutput: actualOutput,
-        );
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final localResult = await _productionLocalDatasource.endProduction(
+        productionId,
+        actualOutput: actualOutput,
+      );
+      if (!localResult) {
         return Left(
-          Apifailure(
-            message: _extractApiMessage(e, 'Failed to end production'),
-          ),
+          LocalDatabaseFailure(messgae: 'Failed to end production locally'),
         );
       }
-    } else {
-      try {
-        final result = await _productionLocalDatasource.endProduction(
-          productionId,
-          actualOutput: actualOutput,
-        );
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _productionRemoteDatasource.endProduction(
+            productionId,
+            actualOutput: actualOutput,
+          );
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, List<ProductionEntity>>> getAllProduction() async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final production = await _productionRemoteDatasource.getAllProduction();
-        return Right(ProductionModel.toEntityList(production));
-      } on DioException catch (e) {
-        return Left(
-          ApiFailure(
-            message: _extractApiMessage(e, 'Failed to fetch production'),
-          ),
+    try {
+      final localProduction = await _productionLocalDatasource
+          .getAllProduction();
+
+      if (localProduction.isNotEmpty || !(await _networkInfo.isConnected)) {
+        return Right(
+          _sortByLatest(ProductionModel.toEntityList(localProduction)),
         );
       }
-    } else {
-      try {
-        final production = await _productionLocalDatasource.getAllProduction();
-        return Right(ProductionModel.toEntityList(production));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
-      }
+
+      final remoteProduction = await _productionRemoteDatasource
+          .getAllProduction();
+      await _cacheRemoteToLocal(remoteProduction);
+      return Right(
+        _sortByLatest(ProductionModel.toEntityList(remoteProduction)),
+      );
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message: _extractApiMessage(e, 'Failed to fetch production'),
+        ),
+      );
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -132,34 +156,33 @@ class ProductionRepositoryImpl implements IProductionRepository {
   Future<Either<Failure, ProductionEntity>> getProductionById(
     String productionId,
   ) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final production = await _productionRemoteDatasource.getProductionById(
-          productionId,
-        );
-        if (production != null) {
-          return Right(production.toEntity());
-        }
-        return Left(Apifailure(message: 'Production not found'));
-      } on DioException catch (e) {
-        return Left(
-          ApiFailure(
-            message: _extractApiMessage(e, 'Failed to fetch production'),
-          ),
-        );
+    try {
+      final localProduction = await _productionLocalDatasource
+          .getProductionById(productionId);
+      if (localProduction != null) {
+        return Right(localProduction.toEntity());
       }
-    } else {
-      try {
-        final production = await _productionLocalDatasource.getProductionById(
-          productionId,
-        );
-        if (production != null) {
-          return Right(production.toEntity());
+
+      if (await _networkInfo.isConnected) {
+        final remoteProduction = await _productionRemoteDatasource
+            .getProductionById(productionId);
+        if (remoteProduction != null) {
+          try {
+            await _productionLocalDatasource.startProduction(remoteProduction);
+          } catch (_) {}
+          return Right(remoteProduction.toEntity());
         }
-        return Left(LocalDatabaseFailure(messgae: 'Production not found'));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
       }
+
+      return Left(LocalDatabaseFailure(messgae: 'Production not found'));
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message: _extractApiMessage(e, 'Failed to fetch production'),
+        ),
+      );
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
@@ -167,55 +190,50 @@ class ProductionRepositoryImpl implements IProductionRepository {
   Future<Either<Failure, bool>> updateProduction(
     ProductionEntity production,
   ) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final model = ProductionModel.fromEntity(production);
-        final result = await _productionRemoteDatasource.updateProduction(
-          model,
-        );
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final model = ProductionModel.fromEntity(production);
+      final localResult = await _productionLocalDatasource.updateProduction(
+        model,
+      );
+      if (!localResult) {
         return Left(
-          Apifailure(
-            message: _extractApiMessage(e, 'Failed to update production'),
-          ),
+          LocalDatabaseFailure(messgae: 'Failed to update production locally'),
         );
       }
-    } else {
-      try {
-        final model = ProductionModel.fromEntity(production);
-        final result = await _productionLocalDatasource.updateProduction(model);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _productionRemoteDatasource.updateProduction(model);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> deleteProduction(String productionId) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final result = await _productionRemoteDatasource.deleteProduction(
-          productionId,
-        );
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final localResult = await _productionLocalDatasource.deleteProduction(
+        productionId,
+      );
+      if (!localResult) {
         return Left(
-          Apifailure(
-            message: _extractApiMessage(e, 'Failed to delete production'),
-          ),
+          LocalDatabaseFailure(messgae: 'Failed to delete production locally'),
         );
       }
-    } else {
-      try {
-        final result = await _productionLocalDatasource.deleteProduction(
-          productionId,
-        );
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _productionRemoteDatasource.deleteProduction(productionId);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 }

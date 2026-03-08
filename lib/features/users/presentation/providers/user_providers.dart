@@ -1,6 +1,11 @@
 import 'package:businesstrack/core/constants/app_constants.dart';
+import 'package:businesstrack/core/services/connectivity/network_info.dart';
 import 'package:businesstrack/features/users/data/datasources/user_remote_datasource.dart';
-import 'package:businesstrack/features/users/data/repositories/user_repository_impl.dart';
+import 'package:businesstrack/features/users/data/datasources/local/user_local_crud_datasource.dart';
+import 'package:businesstrack/features/users/data/datasources/remote/user_remote_crud_datasource.dart';
+import 'package:businesstrack/features/users/data/repositories/user_repository.dart';
+import 'package:businesstrack/features/users/domain/entities/user_entity.dart';
+import 'package:businesstrack/features/users/domain/entities/user_entity.dart';
 import 'package:businesstrack/features/users/domain/repository/user_repository.dart';
 import 'package:businesstrack/features/users/domain/usecases/user_usecases.dart';
 import 'package:dio/dio.dart';
@@ -27,7 +32,14 @@ final userRemoteDataSourceProvider = Provider<IUserRemoteDataSource>((ref) {
 // Repositories
 final userRepositoryProvider = Provider<IUserRepository>((ref) {
   final remoteDataSource = ref.watch(userRemoteDataSourceProvider);
-  return UserRepository(remoteDataSource: remoteDataSource);
+  final localDataSource = ref.watch(userLocalDatasourceProvider);
+  final networkInfo = ref.watch(networkInfoProvider);
+  final userRepository = UserRepository(
+    datasource: localDataSource,
+    networkInfo: networkInfo,
+    remoteDatasource: remoteDataSource as IUserRemoteDatasource,
+  );
+  return userRepository as IUserRepository;
 });
 
 // Use Cases
@@ -57,32 +69,37 @@ final getAIAssistantHistoryUsecaseProvider =
     });
 
 // State Providers
-final userProfileProvider = FutureProvider((ref) async {
-  final usecase = ref.watch(getUserProfileUsecaseProvider);
-  final result = await usecase.call();
-  return result.fold(
-    (failure) => throw Exception(failure.message),
-    (data) => data,
-  );
-});
-
-final aiAssistantHistoryProvider = FutureProvider((ref) async {
-  final usecase = ref.watch(getAIAssistantHistoryUsecaseProvider);
-  final result = await usecase.call();
-  return result.fold(
-    (failure) => throw Exception(failure.message),
-    (data) => data,
-  );
-});
-
-final aiAssistantQueryProvider = FutureProvider.family<String, String>((
+final userProfileProvider = FutureProvider.family<UserEntity, String>((
   ref,
-  query,
+  userId,
 ) async {
-  final usecase = ref.watch(queryAIAssistantUsecaseProvider);
-  final result = await usecase.call(query);
+  final usecase = ref.watch(getUserProfileUsecaseProvider);
+  final result = await usecase.call(userId);
   return result.fold(
     (failure) => throw Exception(failure.message),
     (data) => data,
   );
 });
+
+final aiAssistantHistoryProvider =
+    FutureProvider.family<List<AIAssistantEntity>, String>((ref, userId) async {
+      final usecase = ref.watch(getAIAssistantHistoryUsecaseProvider);
+      final result = await usecase.call(userId);
+      return result.fold(
+        (failure) => throw Exception(failure.message),
+        (data) => data,
+      );
+    });
+
+final aiAssistantQueryProvider =
+    FutureProvider.family<AIAssistantEntity, ({String userId, String query})>((
+      ref,
+      params,
+    ) async {
+      final usecase = ref.watch(queryAIAssistantUsecaseProvider);
+      final result = await usecase.call(params.userId, params.query);
+      return result.fold(
+        (failure) => throw Exception(failure.message),
+        (data) => data,
+      );
+    });

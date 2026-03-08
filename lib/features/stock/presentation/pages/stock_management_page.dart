@@ -6,6 +6,7 @@ import 'package:businesstrack/features/stock/domain/entities/stock_entity.dart';
 import 'package:businesstrack/features/stock/presentation/state/stock_state.dart'
     as stock_state_alias;
 import 'package:businesstrack/features/stock/presentation/viewmodel/stock_viewmodel.dart';
+import 'package:businesstrack/features/stock/presentation/widgets/stock_auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -53,37 +54,39 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
     final materials = materialState.materials;
     final stockTransactions = stockState.stock;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Stock Management'), elevation: 0),
-      body:
-          stockState.status == stock_state_alias.StockStatus.loading &&
-              stockTransactions.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildTopSummary(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        ResponsiveHelper.getHorizontalPadding(context),
-                        0,
-                        ResponsiveHelper.getHorizontalPadding(context),
-                        24,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildActionButtons(),
-                          const SizedBox(height: 24),
-                          _buildStockHistory(stockTransactions, materials),
-                        ],
+    return StockAuthGate(
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Stock Management'), elevation: 0),
+        body:
+            stockState.status == stock_state_alias.StockStatus.loading &&
+                stockTransactions.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  _buildTopSummary(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          ResponsiveHelper.getHorizontalPadding(context),
+                          0,
+                          ResponsiveHelper.getHorizontalPadding(context),
+                          24,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildActionButtons(),
+                            const SizedBox(height: 24),
+                            _buildStockHistory(stockTransactions, materials),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -706,11 +709,12 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
     String materialName,
     double stockAfter,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: isDark ? Colors.grey.shade900 : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isAdd
@@ -754,16 +758,20 @@ class _StockManagementPageState extends ConsumerState<StockManagementPage> {
               children: [
                 Text(
                   materialName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   transaction.description ??
                       (isAdd ? 'Stock added' : 'Stock removed'),
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Container(

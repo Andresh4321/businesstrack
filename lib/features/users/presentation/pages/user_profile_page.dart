@@ -7,7 +7,9 @@ class UserProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userProfile = ref.watch(userProfileProvider);
+    // TODO: Get current user ID from auth state
+    const String userId = '6990a8b6c6b613e7c98648c2';
+    final userProfile = ref.watch(userProfileProvider(userId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),

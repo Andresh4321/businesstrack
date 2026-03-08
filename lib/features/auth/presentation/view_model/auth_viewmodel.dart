@@ -76,4 +76,9 @@ class AuthViewModel extends Notifier<AuthState> {
       },
     );
   }
+
+  //Logout
+  void logout() {
+    state = AuthState();
+  }
 }

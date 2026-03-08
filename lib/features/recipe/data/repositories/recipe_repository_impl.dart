@@ -35,116 +35,138 @@ class RecipeRepositoryImpl implements IRecipeRepository {
        _recipeRemoteDatasource = recipeRemoteDatasource,
        _networkInfo = networkInfo;
 
+  List<RecipeEntity> _sortByLatest(List<RecipeEntity> items) {
+    final sorted = List<RecipeEntity>.from(items);
+    sorted.sort((a, b) {
+      final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bTime.compareTo(aTime);
+    });
+    return sorted;
+  }
+
+  Future<void> _cacheRemoteToLocal(List<RecipeModel> remoteRecipes) async {
+    for (final recipe in remoteRecipes) {
+      try {
+        await _recipeLocalDatasource.createRecipe(recipe);
+      } catch (_) {}
+    }
+  }
+
   @override
   Future<Either<Failure, bool>> createRecipe(RecipeEntity recipe) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final model = RecipeModel.fromEntity(recipe);
-        final result = await _recipeRemoteDatasource.createRecipe(model);
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final model = RecipeModel.fromEntity(recipe);
+
+      final localResult = await _recipeLocalDatasource.createRecipe(model);
+      if (!localResult) {
         return Left(
-          Apifailure(message: e.message ?? 'Failed to create recipe'),
+          LocalDatabaseFailure(messgae: 'Failed to save recipe locally'),
         );
       }
-    } else {
-      try {
-        final model = RecipeModel.fromEntity(recipe);
-        final result = await _recipeLocalDatasource.createRecipe(model);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _recipeRemoteDatasource.createRecipe(model);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> deleteRecipe(String recipeId) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final result = await _recipeRemoteDatasource.deleteRecipe(recipeId);
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final localResult = await _recipeLocalDatasource.deleteRecipe(recipeId);
+      if (!localResult) {
         return Left(
-          Apifailure(message: e.message ?? 'Failed to delete recipe'),
+          LocalDatabaseFailure(messgae: 'Failed to delete recipe locally'),
         );
       }
-    } else {
-      try {
-        final result = await _recipeLocalDatasource.deleteRecipe(recipeId);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _recipeRemoteDatasource.deleteRecipe(recipeId);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, List<RecipeEntity>>> getAllRecipes() async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final recipes = await _recipeRemoteDatasource.getAllRecipes();
-        return Right(RecipeModel.toEntityList(recipes));
-      } on DioException catch (e) {
-        return Left(
-          Apifailure(message: e.message ?? 'Failed to fetch recipes'),
-        );
+    try {
+      final localRecipes = await _recipeLocalDatasource.getAllRecipes();
+
+      if (localRecipes.isNotEmpty || !(await _networkInfo.isConnected)) {
+        return Right(_sortByLatest(RecipeModel.toEntityList(localRecipes)));
       }
-    } else {
-      try {
-        final recipes = await _recipeLocalDatasource.getAllRecipes();
-        return Right(RecipeModel.toEntityList(recipes));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
-      }
+
+      final remoteRecipes = await _recipeRemoteDatasource.getAllRecipes();
+      await _cacheRemoteToLocal(remoteRecipes);
+      return Right(_sortByLatest(RecipeModel.toEntityList(remoteRecipes)));
+    } on DioException catch (e) {
+      return Left(Apifailure(message: e.message ?? 'Failed to fetch recipes'));
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, RecipeEntity>> getRecipeById(String recipeId) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final recipe = await _recipeRemoteDatasource.getRecipeById(recipeId);
-        if (recipe != null) {
-          return Right(recipe.toEntity());
-        }
-        return Left(Apifailure(message: 'Recipe not found'));
-      } on DioException catch (e) {
-        return Left(ApiFailure(message: e.message ?? 'Failed to fetch recipe'));
+    try {
+      final localRecipe = await _recipeLocalDatasource.getRecipeById(recipeId);
+      if (localRecipe != null) {
+        return Right(localRecipe.toEntity());
       }
-    } else {
-      try {
-        final recipe = await _recipeLocalDatasource.getRecipeById(recipeId);
-        if (recipe != null) {
-          return Right(recipe.toEntity());
+
+      if (await _networkInfo.isConnected) {
+        final remoteRecipe = await _recipeRemoteDatasource.getRecipeById(
+          recipeId,
+        );
+        if (remoteRecipe != null) {
+          try {
+            await _recipeLocalDatasource.createRecipe(remoteRecipe);
+          } catch (_) {}
+          return Right(remoteRecipe.toEntity());
         }
-        return Left(LocalDatabaseFailure(messgae: 'Recipe not found'));
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
       }
+
+      return Left(LocalDatabaseFailure(messgae: 'Recipe not found'));
+    } on DioException catch (e) {
+      return Left(ApiFailure(message: e.message ?? 'Failed to fetch recipe'));
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 
   @override
   Future<Either<Failure, bool>> updateRecipe(RecipeEntity recipe) async {
-    if (await _networkInfo.isConnected) {
-      try {
-        final model = RecipeModel.fromEntity(recipe);
-        final result = await _recipeRemoteDatasource.updateRecipe(model);
-        return Right(result);
-      } on DioException catch (e) {
+    try {
+      final model = RecipeModel.fromEntity(recipe);
+
+      final localResult = await _recipeLocalDatasource.updateRecipe(model);
+      if (!localResult) {
         return Left(
-          Apifailure(message: e.message ?? 'Failed to update recipe'),
+          LocalDatabaseFailure(messgae: 'Failed to update recipe locally'),
         );
       }
-    } else {
-      try {
-        final model = RecipeModel.fromEntity(recipe);
-        final result = await _recipeLocalDatasource.updateRecipe(model);
-        return Right(result);
-      } catch (e) {
-        return Left(LocalDatabaseFailure(messgae: e.toString()));
+
+      if (await _networkInfo.isConnected) {
+        try {
+          await _recipeRemoteDatasource.updateRecipe(model);
+        } catch (_) {}
       }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(LocalDatabaseFailure(messgae: e.toString()));
     }
   }
 }
